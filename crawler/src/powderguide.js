@@ -1,4 +1,5 @@
 import { optionalEnv } from '@alpica/db/env';
+import { toMysqlDate } from './runner.js';
 
 /**
  * Adapter for the PowderGuide Conditions Report API (v2).
@@ -148,16 +149,6 @@ export function normalize(item, spotMap) {
  */
 export function itemUpdatedAt(item) {
   return item?.updated_at ?? item?.created_at ?? null;
-}
-
-/**
- * Converts an ISO date-time string into a MySQL DATETIME (UTC) string.
- */
-export function toMysqlDate(iso) {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.valueOf())) return null;
-  return d.toISOString().slice(0, 19).replace('T', ' ');
 }
 
 /**

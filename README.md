@@ -69,6 +69,54 @@ present in the client bundle (the search backend is a server-only DI provider).
   (protects against host-header / DNS-rebinding attacks). Set it to your real
   domain(s) in production.
 
+## API keys
+
+The first key is created automatically on the initial `npm run migrate` (only
+when `api_keys` is empty). To create additional keys:
+
+```bash
+npm run create-api-key -- "some label"          # unlimited
+npm run create-api-key -- "some label" 1000      # 1000 requests/hour
+```
+
+This prints the plaintext key ONCE (only its SHA-256 hash is stored, so it
+cannot be recovered later). The label is optional and just helps you identify
+the key. Put the key in `.env` as `API_KEY=...` for the website, or hand it to
+whatever client needs API access.
+
+### Rate limiting
+
+Each key can have an hourly request cap (`api_keys.rate_limit_per_hour`):
+
+- `NULL` — unlimited (the default). Requests are still counted for statistics,
+  but never blocked.
+- `N` — at most `N` requests per fixed hour window. Requests over the cap get
+  `429 Too Many Requests` with a `Retry-After` header.
+
+Usage is tracked per key and hour in `api_key_usage` for **every** key (limited
+or not), via atomic upserts so counts survive restarts. Inspect usage with:
+
+```sql
+SELECT k.label, u.window_start, u.request_count
+FROM api_key_usage u JOIN api_keys k ON k.id = u.api_key_id
+ORDER BY u.window_start DESC;
+```
+
+Change a limit for an existing key directly in the DB:
+
+```sql
+-- set a limit
+UPDATE api_keys SET rate_limit_per_hour = 1000 WHERE label = 'some label';
+-- make it unlimited again
+UPDATE api_keys SET rate_limit_per_hour = NULL WHERE label = 'some label';
+```
+
+To revoke a key, deactivate it in the database:
+
+```sql
+UPDATE api_keys SET is_active = 0 WHERE label = 'some label';
+```
+
 ## Local development database (Podman)
 
 Spin up a throwaway MySQL that matches `.env`:

@@ -10,7 +10,8 @@
     "./env": "./src/env.js"
   },
   "scripts": {
-    "migrate": "node src/migrate.js"
+    "migrate": "node src/migrate.js",
+    "create-api-key": "node src/create-api-key.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

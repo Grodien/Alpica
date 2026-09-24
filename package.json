@@ -11,6 +11,7 @@
   ],
   "scripts": {
     "migrate": "npm run migrate --workspace @alpica/db",
+    "create-api-key": "npm run create-api-key --workspace @alpica/db --",
     "crawl": "npm run start --workspace @alpica/crawler",
     "api": "npm run start --workspace @alpica/api",
     "api:dev": "npm run dev --workspace @alpica/api"
