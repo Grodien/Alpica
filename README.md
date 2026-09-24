@@ -9,7 +9,7 @@ rendered Angular website.
 | Component | Path | Description |
 |-----------|------|-------------|
 | **db**      | `db`      | Shared MySQL connection pool + SQL migrations. |
-| **crawler** | `crawler` | Scheduled Node.js scripts that pull data from source APIs (PowderGuide, Camptocamp) and store it raw + normalized. |
+| **crawler** | `crawler` | Scheduled Node.js scripts that pull data from source APIs (PowderGuide, Camptocamp, skitour.fr) and store it raw + normalized. |
 | **api**     | `api`     | Node.js/Express read API over the normalized data, protected by an API key. |
 | **web**     | `web`              | Server-side rendered Angular site. Talks to the API server-side so the API key is never exposed to the browser. |
 
@@ -118,13 +118,19 @@ Current sources:
   filename (`https://media.camptocamp.org/c2corg-active/<name><size>.jpg`, size
   `SI`/`MI`/`BI`). This costs one extra request per outing-with-images; disable
   with `CAMPTOCAMP_FETCH_THUMBNAILS=false`.
+- **skitour** — skitour.fr `/sorties` (ski-touring outings). Auth is a custom
+  `cle` header (`SKITOUR_API_KEY`). Requesting with `c=1` returns coordinates
+  (`sommets`/`depart`, already WGS84), a free-text place (massif + spot), the
+  author, and photo URLs — so title, location, and thumbnail all come in one
+  call with no per-item detail request. Incremental by paging newest-first and
+  stopping at the watermark (initial run bounded by the `j` = last-N-days filter).
 
 Run all sources or a subset:
 
 ```bash
 npm run crawl                       # all
 npm run crawl -- camptocamp         # one
-npm run crawl -- powderguide camptocamp
+npm run crawl -- powderguide skitour
 ```
 
 ## Scheduling the crawler
