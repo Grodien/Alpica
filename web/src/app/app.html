@@ -1,0 +1,62 @@
+<main class="page">
+  <header class="header">
+    <h1>{{ title() }}</h1>
+    <p class="tagline">Bedingungsberichte aus den Bergen, an einem Ort.</p>
+  </header>
+
+  <form class="search" (ngSubmit)="search()">
+    <input
+      type="search"
+      name="q"
+      class="search__input"
+      placeholder="Freitextsuche (z. B. Ort, Autor, Aktivität)…"
+      autocomplete="off"
+      aria-label="Freitextsuche"
+      [(ngModel)]="query"
+    />
+    <button type="submit" class="search__button" [disabled]="loading()">
+      {{ loading() ? 'Suche…' : 'Suchen' }}
+    </button>
+  </form>
+
+  @if (error()) {
+    <p class="message message--error" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="message">Lade Ergebnisse…</p>
+  } @else if (searched() && results().length === 0) {
+    <p class="message">Keine Ergebnisse gefunden.</p>
+  }
+
+  <ul class="results">
+    @for (report of results(); track report.id) {
+      <li class="result">
+        <a
+          class="result__link"
+          [href]="report.url ?? '#'"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          @if (report.thumbnail) {
+            <img
+              class="result__thumb"
+              [src]="report.thumbnail"
+              [alt]="report.title ?? 'Bericht'"
+              loading="lazy"
+            />
+          }
+          <div class="result__body">
+            <h2 class="result__title">{{ report.title || 'Ohne Titel' }}</h2>
+            <p class="result__meta">
+              @if (report.place) {<span>{{ report.place }}</span>}
+              @if (report.author) {<span>· {{ report.author }}</span>}
+              @if (report.activity) {<span>· {{ report.activity }}</span>}
+              @if (report.date) {<span>· {{ report.date }}</span>}
+            </p>
+          </div>
+        </a>
+      </li>
+    }
+  </ul>
+</main>

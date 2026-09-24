@@ -1,0 +1,17 @@
+{
+  "name": "@alpica/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Read API over the normalized mountain conditions data. API-key protected.",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "@alpica/db": "*",
+    "cors": "^2.8.5",
+    "express": "^4.21.0"
+  }
+}

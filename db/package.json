@@ -1,0 +1,19 @@
+{
+  "name": "@alpica/db",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared MySQL pool and migrations for Mountain-Radar.",
+  "type": "module",
+  "main": "src/pool.js",
+  "exports": {
+    ".": "./src/pool.js",
+    "./env": "./src/env.js"
+  },
+  "scripts": {
+    "migrate": "node src/migrate.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "mysql2": "^3.11.3"
+  }
+}
