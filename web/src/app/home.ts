@@ -29,6 +29,14 @@ const RANGE_STEPS: RangeStep[] = [
 const DEFAULT_CENTER: [number, number] = [46.5, 9.5];
 const DEFAULT_ZOOM = 7;
 
+/**
+ * Skitourenguru tile server (standard XYZ scheme via query params). It serves
+ * the region-appropriate topo map across the whole Alps. NOTE: the server uses
+ * a Referer allowlist — it works from localhost, but for a public domain you
+ * likely need Skitourenguru to whitelist it. See the map notes in the README.
+ */
+const SKITOURENGURU_TILES = 'https://map.skitourenguru.com/AP_SG_TOPO_MINI.tms?x={x}&y={y}&z={z}';
+
 @Component({
   selector: 'app-home',
   imports: [],
@@ -92,10 +100,25 @@ export class Home implements AfterViewInit, OnDestroy {
         zoomControl: true,
       });
 
+      // --- Base map --------------------------------------------------------
+      // OpenStreetMap sits underneath as a worldwide fallback (shows through
+      // where the Skitourenguru tiles have no coverage or fail to load).
       leaflet
         .tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 18,
           attribution: '&copy; OpenStreetMap contributors',
+        })
+        .addTo(this.map);
+
+      // Skitourenguru's own tile server. It internally picks the best regional
+      // map (swisstopo for Switzerland, IGN for France, etc.), so no manual
+      // layer switch is needed — one layer covers the whole Alps.
+      // Uses an XYZ scheme with query params: ?x=&y=&z=.
+      leaflet
+        .tileLayer(SKITOURENGURU_TILES, {
+          maxZoom: 17,
+          attribution:
+            '&copy; <a href="https://skitourenguru.com">Skitourenguru</a> / swisstopo, IGN',
         })
         .addTo(this.map);
 
