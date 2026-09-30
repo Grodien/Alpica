@@ -1,58 +1,72 @@
-<main class="page">
-  <header class="header">
-    <h1>Mountain-Radar</h1>
-    <p class="tagline">Bedingungsberichte aus den Bergen, an einem Ort.</p>
+<div class="app">
+  <header class="app__header">
+    <h1 class="app__title">MountainRadar</h1>
+    <p class="app__subtitle">One Search. More Conditions.</p>
   </header>
 
-  <!--
-    Native GET form: submitting navigates to /?q=... as a full page load, so the
-    server always renders the results. No client-side fetch, no JSON endpoint.
-  -->
-  <form class="search" method="get" action="/">
+  <div class="range">
+    <span class="range__label">Alle</span>
     <input
-      type="search"
-      name="q"
-      class="search__input"
-      placeholder="Freitextsuche (z. B. Ort, Autor, Aktivität)…"
-      autocomplete="off"
-      aria-label="Freitextsuche"
-      [value]="query()"
+      type="range"
+      class="range__slider"
+      min="0"
+      [max]="steps.length - 1"
+      step="1"
+      [value]="rangeIndex()"
+      (input)="onRangeInput($event)"
+      aria-label="Datumsbereich"
     />
-    <button type="submit" class="search__button">Suchen</button>
-  </form>
+    <span class="range__value">{{ currentStep.label }}</span>
+  </div>
 
-  @if (searched() && results().length === 0) {
-    <p class="message">Keine Ergebnisse gefunden.</p>
-  }
+  <div class="content">
+    <!-- Map: 50% of the screen height (desktop: left half) -->
+    <div class="map-wrap">
+      <div #mapEl class="map" role="application" aria-label="Karte mit Ergebnissen"></div>
+      @if (loading()) {
+        <div class="map__loading">Lade…</div>
+      }
+    </div>
 
-  <ul class="results">
-    @for (report of results(); track report.id) {
-      <li class="result">
-        <a
-          class="result__link"
-          [href]="report.url ?? '#'"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          @if (report.thumbnail) {
-            <img
-              class="result__thumb"
-              [src]="report.thumbnail"
-              [alt]="report.title ?? 'Bericht'"
-              loading="lazy"
-            />
-          }
-          <div class="result__body">
-            <h2 class="result__title">{{ report.title || 'Ohne Titel' }}</h2>
-            <p class="result__meta">
-              @if (report.place) {<span>{{ report.place }}</span>}
-              @if (report.author) {<span>· {{ report.author }}</span>}
-              @if (report.activity) {<span>· {{ report.activity }}</span>}
-              @if (report.date) {<span>· {{ report.date }}</span>}
-            </p>
-          </div>
-        </a>
-      </li>
-    }
-  </ul>
-</main>
+    <!-- Results list -->
+    <section class="results">
+      <p class="results__count">{{ results().length }} Ergebnisse</p>
+      <ul class="results__list">
+        @for (report of orderedResults(); track trackById($index, report)) {
+          <li
+            class="result"
+            [class.result--selected]="selectedId() === report.id"
+            (click)="selectReport(report.id)"
+            (mouseenter)="highlightPin(report.id)"
+            (mouseleave)="unhighlightPin(report.id)"
+          >
+            <div class="result__thumb">
+              @if (report.thumbnail) {
+                <img [src]="report.thumbnail" [alt]="report.title ?? 'Bild'" loading="lazy" />
+              } @else {
+                <span class="result__thumb-fallback">{{ display(report.activity).icon }}</span>
+              }
+            </div>
+            <div class="result__body">
+              <span class="result__activity">
+                {{ display(report.activity).icon }} {{ display(report.activity).label }}
+              </span>
+              <h2 class="result__title">{{ report.title || 'Ohne Titel' }}</h2>
+              @if (report.place) {
+                <p class="result__place">{{ report.place }}</p>
+              }
+              <button type="button" class="result__cta" (click)="openReport(report); $event.stopPropagation()">
+                Details bei {{ report.source }}
+              </button>
+              @if (report.author) {
+                <p class="result__author">Autor: {{ report.author }}</p>
+              }
+            </div>
+          </li>
+        } @empty {
+          <li class="results__empty">Keine Ergebnisse im aktuellen Kartenausschnitt.</li>
+        }
+      </ul>
+    </section>
+  </div>
+</div>

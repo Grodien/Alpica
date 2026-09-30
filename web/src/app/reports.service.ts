@@ -1,5 +1,6 @@
-import { InjectionToken, Injectable, TransferState, inject, makeStateKey } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, REQUEST, inject } from '@angular/core';
+import { Observable } from 'rxjs';
 
 /** A normalized report as returned by the API. */
 export interface Report {
@@ -18,84 +19,62 @@ export interface Report {
 }
 
 export interface SearchResponse {
-  query: { q: string | null; from: string; to: string; limit: number };
   count: number;
   results: Report[];
 }
 
-export interface SearchOptions {
-  q?: string;
+export interface DateRange {
   from?: string;
   to?: string;
   limit?: number;
 }
 
-/**
- * A pluggable search backend. Only the SERVER provides a real implementation
- * (see reports.server.ts, wired in app.config.server.ts). The browser build
- * has no implementation and therefore contains none of the fetch/URL/API-key
- * code — it only reads what the server rendered via TransferState.
- */
-export interface SearchBackend {
-  fetch(options: SearchOptions): Promise<SearchResponse>;
-}
-
-export const SEARCH_BACKEND = new InjectionToken<SearchBackend>('SEARCH_BACKEND');
-
-export function searchStateKey(options: SearchOptions): string {
-  return `search:${options.q ?? ''}:${options.from ?? ''}:${options.to ?? ''}:${options.limit ?? ''}`;
-}
-
-function emptyResponse(options: SearchOptions): SearchResponse {
-  return {
-    query: {
-      q: options.q ?? null,
-      from: options.from ?? '',
-      to: options.to ?? '',
-      limit: options.limit ?? 0,
-    },
-    count: 0,
-    results: [],
-  };
+export interface BoundingBox {
+  minLat: number;
+  maxLat: number;
+  minLng: number;
+  maxLng: number;
 }
 
 /**
- * Runs the search without exposing any browser-facing endpoint.
+ * Talks to the SAME-ORIGIN proxy endpoints (`/api/search`, `/api/bbox`) served
+ * by the Angular SSR server (see src/server.ts). Those endpoints inject the
+ * `x-api-key` header server-side, so the real API URL and key never reach the
+ * browser.
  *
- * - Server: delegates to the injected SEARCH_BACKEND (which calls the internal
- *   API with the key) and stores the result in TransferState.
- * - Browser: reads the result the server serialized into the page. It never
- *   performs an HTTP request and contains no API details.
+ * During SSR, HttpClient needs an absolute URL, so we derive the current origin
+ * from the incoming request. In the browser a relative URL is used.
  */
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
-  private readonly transferState = inject(TransferState);
-  private readonly backend = inject(SEARCH_BACKEND, { optional: true });
+  private readonly http = inject(HttpClient);
+  private readonly request = inject(REQUEST, { optional: true });
 
-  search(options: SearchOptions): Observable<SearchResponse> {
-    const key = makeStateKey<SearchResponse>(searchStateKey(options));
+  /** Bounding-box search for the current map viewport. */
+  searchByBoundingBox(bbox: BoundingBox, range: DateRange = {}): Observable<SearchResponse> {
+    let params = new HttpParams()
+      .set('minLat', String(bbox.minLat))
+      .set('maxLat', String(bbox.maxLat))
+      .set('minLng', String(bbox.minLng))
+      .set('maxLng', String(bbox.maxLng));
+    params = this.applyRange(params, range);
+    return this.http.get<SearchResponse>(`${this.baseUrl()}/api/bbox`, { params });
+  }
 
-    if (this.backend) {
-      // Server path.
-      return new Observable<SearchResponse>((subscriber) => {
-        this.backend!.fetch(options)
-          .then((result) => {
-            this.transferState.set(key, result);
-            subscriber.next(result);
-            subscriber.complete();
-          })
-          .catch((err) => {
-            console.error('[web] search backend failed:', err);
-            const fallback = emptyResponse(options);
-            this.transferState.set(key, fallback);
-            subscriber.next(fallback);
-            subscriber.complete();
-          });
-      });
+  private applyRange(params: HttpParams, range: DateRange): HttpParams {
+    if (range.from) params = params.set('from', range.from);
+    if (range.to) params = params.set('to', range.to);
+    if (range.limit != null) params = params.set('limit', String(range.limit));
+    return params;
+  }
+
+  /** Absolute origin on the server, empty (relative) in the browser. */
+  private baseUrl(): string {
+    if (this.request) {
+      const host = this.request.headers.get('host');
+      const proto = this.request.headers.get('x-forwarded-proto') ?? 'http';
+      if (host) return `${proto}://${host}`;
     }
-
-    // Browser path: reuse the server-rendered result; never call out.
-    const cached = this.transferState.get<SearchResponse | null>(key, null);
-    return of(cached ?? emptyResponse(options));
+    return '';
   }
 }

@@ -44,30 +44,54 @@ The website has its own toolchain:
 ```bash
 cd web
 npm install
-cp ../.env .env   # provides API_BASE_URL, API_KEY and PORT to the SSR server
-npm run build && npm run serve:ssr
+npm run build && npm run serve:ssr   # reads the single root .env (../.env)
 ```
 
-The website has **no browser-facing API endpoint at all**. Searching is a normal
-navigation (`/?q=...`): the search form is a native GET form, so submitting it
-triggers a full page load. During server-side rendering a route resolver fetches
-the results from the internal API (with the `x-api-key` header) and the server
-returns finished HTML with the results already in it. The browser receives only
-rendered HTML — never JSON, and the API key, API URL and fetch code are not even
-present in the client bundle (the search backend is a server-only DI provider).
+There is a single `.env` at the repo root; every component (db, crawler, api,
+and the web SSR server) reads it. The web `serve:ssr` script loads it via
+`--env-file=../.env`.
+
+The interactive map re-queries as the user pans/zooms, which is inherently a
+client-side action. So the browser calls same-origin proxy endpoints on the SSR
+server (`/api/bbox`, `/api/search`); the server injects the `x-api-key` header
+and forwards to the internal API. The real API URL and key are never present in
+the HTML or the client bundle.
 
 ## Security posture
 
-- **The API is not reachable from outside the host.** It binds to `127.0.0.1`
-  by default (`API_HOST`), so only the co-located web SSR server talks to it.
-  Do not set `API_HOST=0.0.0.0` unless you deliberately want to expose it.
-- The API key is required on every API request (`x-api-key` header) and only its
-  SHA-256 hash is stored in `api_keys`.
-- The browser never sees the API key or the API URL — the SSR proxy adds them
-  server-side.
+- **The internal API is not reachable from outside the host.** It binds to
+  `127.0.0.1` by default (`API_HOST`), so only the co-located web SSR server
+  talks to it. Do not set `API_HOST=0.0.0.0` unless you deliberately want to
+  expose it.
+- The API key is required on every internal API request (`x-api-key` header) and
+  only its SHA-256 hash is stored in `api_keys`.
+- The browser never sees the API key or the internal API URL — the SSR proxy
+  adds them server-side.
 - The SSR server enforces a Host-header allowlist via `NG_ALLOWED_HOSTS`
   (protects against host-header / DNS-rebinding attacks). Set it to your real
   domain(s) in production.
+
+### Protecting the same-origin proxy (`/api/*`)
+
+The proxy endpoints are public (the users' browsers must reach them), so they
+are guarded to make casual misuse by other sites/scripts impractical. Note this
+cannot be fully airtight — anyone with `curl` can forge headers — but it blocks
+the realistic abuse cases. Four layers (see `web/src/proxy-guard.ts`):
+
+- **Strict CORS** — only origins in `WEB_ALLOWED_ORIGINS` may use the proxy from
+  a browser; other sites' cross-origin `fetch` is blocked.
+- **Origin/Referer check** — requests carrying an `Origin`/`Referer` from another
+  site are rejected server-side (`403`).
+- **Per-IP rate limit** — `WEB_PROXY_RATE_LIMIT` requests per minute per IP;
+  over the cap returns `429`.
+- **Session token** — each rendered page sets a short-lived, HMAC-signed
+  `HttpOnly` cookie (`WEB_SESSION_SECRET`); the proxy requires it, so calls must
+  come from a real page session (missing/invalid → `401`).
+
+Configure via `WEB_ALLOWED_ORIGINS`, `WEB_SESSION_SECRET`, `WEB_COOKIE_SECURE`
+(set `true` behind HTTPS), and `WEB_PROXY_RATE_LIMIT`. In production set a fixed
+`WEB_SESSION_SECRET` (a random per-process one breaks sessions across restarts /
+multiple instances).
 
 ## API keys
 
