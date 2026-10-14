@@ -1,0 +1,40 @@
+<ul class="results__list">
+  @for (report of reports(); track trackById($index, report)) {
+    <li
+      class="result"
+      [class.result--selected]="selectedId() === report.id"
+      (click)="select.emit(report.id)"
+      (mouseenter)="hover.emit(report.id)"
+      (mouseleave)="hoverEnd.emit(report.id)"
+    >
+      <div class="result__thumb">
+        @if (report.thumbnail) {
+          <img [src]="report.thumbnail" [alt]="report.title ?? 'Bild'" loading="lazy" />
+        } @else {
+          <span class="result__thumb-fallback">{{ display(report.activity).icon }}</span>
+        }
+      </div>
+      <div class="result__body">
+        <span class="result__activity">
+          {{ display(report.activity).icon }} {{ display(report.activity).label }}
+        </span>
+        <h2 class="result__title">{{ report.title || 'Ohne Titel' }}</h2>
+        @if (report.place) {
+          <p class="result__place">{{ report.place }}</p>
+        }
+        <button
+          type="button"
+          class="result__cta"
+          (click)="open.emit(report); $event.stopPropagation()"
+        >
+          Details bei {{ report.source }}
+        </button>
+        @if (report.author) {
+          <p class="result__author">Autor: {{ report.author }}</p>
+        }
+      </div>
+    </li>
+  } @empty {
+    <li class="results__empty">Keine Ergebnisse im aktuellen Kartenausschnitt.</li>
+  }
+</ul>

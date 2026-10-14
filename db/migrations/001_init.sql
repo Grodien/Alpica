@@ -1,5 +1,5 @@
 -- =============================================================================
--- Mountain-Radar initial schema
+-- Alpica initial schema
 -- =============================================================================
 
 -- Raw, untouched payloads from source APIs. Kept so we can re-normalize later

@@ -11,7 +11,11 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { ReportsService, type BoundingBox, type Report } from './reports.service';
+import { ResultsList } from './results-list';
 import { activityDisplay } from './activity-icons';
+
+/** Viewport width (px) at/above which the desktop layout is used. */
+const DESKTOP_BREAKPOINT = 860;
 
 /** Date-range slider steps. */
 interface RangeStep {
@@ -39,7 +43,7 @@ const SKITOURENGURU_TILES = 'https://map.skitourenguru.com/AP_SG_TOPO_MINI.tms?x
 
 @Component({
   selector: 'app-home',
-  imports: [],
+  imports: [ResultsList],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
@@ -55,6 +59,9 @@ export class Home implements AfterViewInit, OnDestroy {
   protected readonly loading = signal(false);
   protected readonly selectedId = signal<number | null>(null);
 
+  /** True on desktop-width viewports. SSR renders the mobile layout by default. */
+  protected readonly isDesktop = signal(false);
+
   /**
    * List order for display: the selected report (if any) is moved to the top,
    * the rest keep their original order. The map markers still use the raw
@@ -69,7 +76,11 @@ export class Home implements AfterViewInit, OnDestroy {
     return [selected, ...all.filter((r) => r.id !== id)];
   });
 
-  protected readonly display = activityDisplay;
+  private onResize = (): void => {
+    this.isDesktop.set(window.innerWidth >= DESKTOP_BREAKPOINT);
+    // The map container size changes between layouts; keep Leaflet in sync.
+    setTimeout(() => this.map?.invalidateSize(), 0);
+  };
 
   // Leaflet is browser-only; these are set after dynamic import.
   private L: typeof import('leaflet') | null = null;
@@ -85,6 +96,10 @@ export class Home implements AfterViewInit, OnDestroy {
   async ngAfterViewInit(): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) return;
 
+    // Pick the layout for the current viewport and track resizes.
+    this.onResize();
+    window.addEventListener('resize', this.onResize);
+
     try {
       // Load Leaflet only in the browser (it touches window/document). Leaflet
       // is a CommonJS module, so depending on interop the API may live on
@@ -98,18 +113,11 @@ export class Home implements AfterViewInit, OnDestroy {
         center: DEFAULT_CENTER,
         zoom: DEFAULT_ZOOM,
         zoomControl: true,
+        // Hide the "Leaflet" attribution badge in the corner.
+        attributionControl: false,
       });
 
       // --- Base map --------------------------------------------------------
-      // OpenStreetMap sits underneath as a worldwide fallback (shows through
-      // where the Skitourenguru tiles have no coverage or fail to load).
-      leaflet
-        .tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 18,
-          attribution: '&copy; OpenStreetMap contributors',
-        })
-        .addTo(this.map);
-
       // Skitourenguru's own tile server. It internally picks the best regional
       // map (swisstopo for Switzerland, IGN for France, etc.), so no manual
       // layer switch is needed — one layer covers the whole Alps.
@@ -140,6 +148,9 @@ export class Home implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.moveDebounce) clearTimeout(this.moveDebounce);
+    if (isPlatformBrowser(this.platformId)) {
+      window.removeEventListener('resize', this.onResize);
+    }
     this.map?.remove();
   }
 

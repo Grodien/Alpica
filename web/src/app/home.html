@@ -1,4 +1,12 @@
-<div class="app">
+<!--
+  Two layouts share one Leaflet map instance (a single #mapEl) and one
+  <app-results-list>. The layout is selected by the `app--desktop` / `app--mobile`
+  class; the CSS for each lives in clearly separated blocks in home.css.
+
+  - Mobile:  header + slider on top, map (~45% height), scrollable list below.
+  - Desktop: map full width on top, results list underneath (page scrolls).
+-->
+<div class="app" [class.app--desktop]="isDesktop()" [class.app--mobile]="!isDesktop()">
   <header class="app__header">
     <h1 class="app__title">MountainRadar</h1>
     <p class="app__subtitle">One Search. More Conditions.</p>
@@ -20,7 +28,6 @@
   </div>
 
   <div class="content">
-    <!-- Map: 50% of the screen height (desktop: left half) -->
     <div class="map-wrap">
       <div #mapEl class="map" role="application" aria-label="Karte mit Ergebnissen"></div>
       @if (loading()) {
@@ -28,45 +35,16 @@
       }
     </div>
 
-    <!-- Results list -->
     <section class="results">
       <p class="results__count">{{ results().length }} Ergebnisse</p>
-      <ul class="results__list">
-        @for (report of orderedResults(); track trackById($index, report)) {
-          <li
-            class="result"
-            [class.result--selected]="selectedId() === report.id"
-            (click)="selectReport(report.id)"
-            (mouseenter)="highlightPin(report.id)"
-            (mouseleave)="unhighlightPin(report.id)"
-          >
-            <div class="result__thumb">
-              @if (report.thumbnail) {
-                <img [src]="report.thumbnail" [alt]="report.title ?? 'Bild'" loading="lazy" />
-              } @else {
-                <span class="result__thumb-fallback">{{ display(report.activity).icon }}</span>
-              }
-            </div>
-            <div class="result__body">
-              <span class="result__activity">
-                {{ display(report.activity).icon }} {{ display(report.activity).label }}
-              </span>
-              <h2 class="result__title">{{ report.title || 'Ohne Titel' }}</h2>
-              @if (report.place) {
-                <p class="result__place">{{ report.place }}</p>
-              }
-              <button type="button" class="result__cta" (click)="openReport(report); $event.stopPropagation()">
-                Details bei {{ report.source }}
-              </button>
-              @if (report.author) {
-                <p class="result__author">Autor: {{ report.author }}</p>
-              }
-            </div>
-          </li>
-        } @empty {
-          <li class="results__empty">Keine Ergebnisse im aktuellen Kartenausschnitt.</li>
-        }
-      </ul>
+      <app-results-list
+        [reports]="orderedResults()"
+        [selectedId]="selectedId()"
+        (select)="selectReport($event)"
+        (hover)="highlightPin($event)"
+        (hoverEnd)="unhighlightPin($event)"
+        (open)="openReport($event)"
+      />
     </section>
   </div>
 </div>

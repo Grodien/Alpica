@@ -1,23 +1,11 @@
 :host {
-  --accent: #2b6cb0;
-  --ink: #1a2230;
-  --muted: #5a6572;
-  --border: #e2e8f0;
   display: block;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--ink);
 }
 
-.app {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 1rem 1rem 1rem;
-  /* Fill the viewport so the page itself never scrolls — only the list does. */
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
+/* ===========================================================================
+   Shared elements (header, slider, map, pins) — used by both layouts.
+   =========================================================================== */
 
 .app__header {
   text-align: center;
@@ -34,7 +22,6 @@
   font-size: 0.85rem;
 }
 
-/* --- Date range slider --- */
 .range {
   display: flex;
   align-items: center;
@@ -57,24 +44,12 @@
   accent-color: var(--accent);
 }
 
-/* --- Content layout --- */
-/* Takes the remaining viewport height; header + slider stay fixed on top. */
-.content {
-  flex: 1;
-  min-height: 0; /* allow children to shrink so the list can scroll */
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
 .map-wrap {
   position: relative;
-  flex: 0 0 45%; /* mobile: map takes ~45% of the content area */
 }
 .map {
   width: 100%;
   height: 100%;
-  min-height: 220px;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--border);
@@ -92,113 +67,14 @@
   z-index: 500;
 }
 
-/* --- Results --- */
-/* The list is the only scrollable region. */
-.results {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
 .results__count {
   font-size: 0.85rem;
   color: var(--muted);
   margin: 0 0 0.5rem;
   flex-shrink: 0;
 }
-.results__list {
-  list-style: none;
-  margin: 0;
-  padding: 0 0.25rem 0.25rem 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  overflow-y: auto;
-  min-height: 0;
-}
-.results__empty {
-  color: var(--muted);
-  font-size: 0.9rem;
-  padding: 1rem 0;
-}
 
-.result {
-  display: flex;
-  gap: 0.85rem;
-  padding: 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
-}
-.result:hover {
-  border-color: var(--accent);
-}
-.result--selected {
-  border-color: var(--accent);
-  background: #eef5fc;
-  box-shadow: 0 2px 10px rgba(43, 108, 176, 0.18);
-}
-
-.result__thumb {
-  width: 84px;
-  height: 84px;
-  flex-shrink: 0;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #f1f5f9;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.result__thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.result__thumb-fallback {
-  font-size: 2rem;
-}
-
-.result__body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-}
-.result__activity {
-  font-size: 0.78rem;
-  color: var(--accent);
-  font-weight: 600;
-}
-.result__title {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-.result__place {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-.result__cta {
-  align-self: flex-start;
-  margin-top: 0.35rem;
-  border: none;
-  background: var(--accent);
-  color: #fff;
-  border-radius: 999px;
-  padding: 0.3rem 0.8rem;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-.result__author {
-  margin: 0.25rem 0 0;
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-
-/* --- Map pins --- */
+/* Map pins (Leaflet divIcons render outside this component's view scope). */
 :host ::ng-deep .pin {
   background: transparent;
   border: none;
@@ -219,7 +95,6 @@
 :host ::ng-deep .pin__icon > * {
   transform: rotate(45deg);
 }
-/* Pin highlight when the matching list item is hovered. */
 :host ::ng-deep .pin--hover .pin__icon {
   background: var(--accent);
   border-color: #fff;
@@ -229,17 +104,67 @@
   z-index: 1000;
 }
 
-/* --- Desktop: map left (50%), list right --- */
-@media (min-width: 860px) {
-  .content {
-    flex-direction: row;
-    align-items: stretch;
-  }
-  .map-wrap {
-    flex: 0 0 50%;
-  }
-  .results {
-    flex: 1;
-    min-width: 0;
-  }
+/* ===========================================================================
+   MOBILE layout
+   Fills the viewport; header + slider fixed on top, map ~45%, list scrolls.
+   =========================================================================== */
+.app--mobile {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1rem;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.app--mobile .content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.app--mobile .map-wrap {
+  flex: 0 0 45%;
+}
+.app--mobile .map {
+  min-height: 220px;
+}
+.app--mobile .results {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* Only the list scrolls. */
+.app--mobile .results app-results-list {
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+}
+
+/* ===========================================================================
+   DESKTOP layout
+   Map full width on top, results list underneath; the page scrolls normally.
+   =========================================================================== */
+.app--desktop {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 3rem;
+}
+.app--desktop .content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.app--desktop .map-wrap {
+  width: 100%;
+  height: 60vh;
+  min-height: 380px;
+}
+/* Results list as a responsive grid under the full-width map. */
+.app--desktop .results ::ng-deep .results__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 0.75rem;
 }
