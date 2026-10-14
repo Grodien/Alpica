@@ -10,6 +10,9 @@ node_modules/
 **/.env.*
 !**/.env.example
 
+# PM2 process config (deployment-specific, not committed)
+ecosystem.config.cjs
+
 # Build output
 dist/
 **/dist/
