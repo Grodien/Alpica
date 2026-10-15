@@ -54,7 +54,14 @@ function parseBasicAuth(header: string | undefined): { user: string; pass: strin
 export function siteBasicAuth(): express.RequestHandler {
   const expectedPass = process.env['SITE_PASSWORD'] ?? '';
   const expectedUser = process.env['SITE_USERNAME'] || 'preview';
-  const realm = (process.env['SITE_AUTH_REALM'] || 'Restricted — preview').replace(/"/g, '');
+  // The realm goes into the WWW-Authenticate header, which must be ASCII only.
+  // Strip quotes (would break the header syntax) and any non-ASCII characters
+  // (e.g. an em-dash), otherwise res.setHeader throws and the request 500s.
+  const realm = (process.env['SITE_AUTH_REALM'] || 'Restricted preview')
+    .replace(/"/g, '')
+    // eslint-disable-next-line no-control-regex
+    .replace(/[^\x20-\x7E]/g, '')
+    .trim() || 'Restricted preview';
 
   // Gate disabled: no password configured, site is public.
   if (!expectedPass) {
