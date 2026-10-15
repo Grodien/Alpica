@@ -6,12 +6,20 @@ import {
 } from '@angular/ssr/node';
 import express from 'express';
 import { join } from 'node:path';
+import { siteBasicAuth } from './basic-auth';
 import { proxyCors, proxyGuard, setSessionCookie } from './proxy-guard';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
+
+/**
+ * Pre-launch gate: when SITE_PASSWORD is set, the whole site is behind HTTP
+ * Basic Auth (page, assets, and the /api/* proxy). Must be registered FIRST so
+ * nothing is served without credentials. Remove SITE_PASSWORD to go public.
+ */
+app.use(siteBasicAuth());
 
 /**
  * Same-origin proxy to the internal API.
