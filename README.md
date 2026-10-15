@@ -9,7 +9,7 @@ rendered Angular website.
 | Component | Path | Description |
 |-----------|------|-------------|
 | **db**      | `db`      | Shared MySQL connection pool + SQL migrations. |
-| **crawler** | `crawler` | Scheduled Node.js scripts that pull data from source APIs (PowderGuide, Camptocamp, skitour.fr) and store it raw + normalized. |
+| **crawler** | `crawler` | Scheduled Node.js scripts that pull data from source APIs (PowderGuide, Camptocamp, skitour.fr, Gipfelbuch.ch) and store it raw + normalized. |
 | **api**     | `api`     | Node.js/Express read API over the normalized data, protected by an API key. |
 | **web**     | `web`              | Server-side rendered Angular site. Talks to the API server-side so the API key is never exposed to the browser. |
 
@@ -33,7 +33,7 @@ npm run migrate
 
 # 4. Run the crawler once (wire this to cron / launchd for scheduling)
 npm run crawl                 # all sources
-npm run crawl -- camptocamp   # a single source (powderguide | camptocamp)
+npm run crawl -- camptocamp   # a single source (powderguide | camptocamp | skitour | gipfelbuch)
 
 # 5. Start the API
 npm run api
@@ -196,13 +196,21 @@ Current sources:
   author, and photo URLs — so title, location, and thumbnail all come in one
   call with no per-item detail request. Incremental by paging newest-first and
   stopping at the watermark (initial run bounded by the `j` = last-N-days filter).
+- **gipfelbuch** — Gipfelbuch.ch `/api/v2/conditions`. Auth: the key goes in the
+  `api_key` query param (`GIPFELBUCH_API_KEY`); the documented `X-API-KEY` header
+  is rejected on the live installation. The endpoint accepts a plain
+  `date_from`/`date_to` window with no coordinates, so one request per crawl
+  covers everything (watermark..now). It has no pagination and `limit` is a hard
+  cap, so `GIPFELBUCH_LIMIT` must stay above the number of conditions in the
+  window (the crawler logs a warning if the cap is hit). Each condition carries
+  coordinates, a free-text place (spot + region), author, and an image URL.
 
 Run all sources or a subset:
 
 ```bash
 npm run crawl                       # all
 npm run crawl -- camptocamp         # one
-npm run crawl -- powderguide skitour
+npm run crawl -- powderguide gipfelbuch
 ```
 
 ## Scheduling the crawler

@@ -3,6 +3,7 @@ import { runCrawl } from './runner.js';
 import { powderguideAdapter } from './powderguide.js';
 import { camptocampAdapter } from './camptocamp.js';
 import { skitourAdapter } from './skitour.js';
+import { gipfelbuchAdapter } from './gipfelbuch.js';
 
 /**
  * Crawler entry point. Runs one or more source adapters through the generic
@@ -18,6 +19,7 @@ const ADAPTERS = {
   [powderguideAdapter.source]: powderguideAdapter,
   [camptocampAdapter.source]: camptocampAdapter,
   [skitourAdapter.source]: skitourAdapter,
+  [gipfelbuchAdapter.source]: gipfelbuchAdapter,
 };
 
 async function main() {
