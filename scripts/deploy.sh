@@ -84,15 +84,18 @@ else
 fi
 
 # --- 5. Reload pm2 processes ------------------------------------------------
-# `pm2 reload` restarts workers one by one (zero-downtime); `--restart` does a
-# hard restart. If the processes aren't registered yet (first deploy), start
-# them from the ecosystem file instead.
-if pm2 describe alpica-web >/dev/null 2>&1; then
-  log "pm2 ${PM2_ACTION} (alpica-api, alpica-web)"
-  pm2 "${PM2_ACTION}" alpica-api alpica-web
+# Drive pm2 from the ecosystem file so BOTH apps are always covered: `pm2
+# reload <ecosystem>` reloads already-running apps (zero-downtime, one worker at
+# a time) and starts any that are missing — so a process that was stopped,
+# errored, or never registered gets (re)started instead of silently skipped.
+# `--update-env` re-reads the environment (e.g. new SITE_PASSWORD) on reload.
+# With --restart it does a hard restart of every app in the ecosystem instead.
+if [ "${PM2_ACTION}" = "restart" ]; then
+  log "pm2 restart (from ${ECOSYSTEM})"
+  pm2 restart "${ECOSYSTEM}" --update-env
 else
-  log "pm2 processes not found — starting from ${ECOSYSTEM}"
-  pm2 start "${ECOSYSTEM}"
+  log "pm2 reload (from ${ECOSYSTEM})"
+  pm2 reload "${ECOSYSTEM}" --update-env
 fi
 
 # Persist the current process list so systemd's `pm2 resurrect` restores it
