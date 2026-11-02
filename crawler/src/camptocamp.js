@@ -1,5 +1,5 @@
 import { optionalEnv } from '@alpica/db/env';
-import { toMysqlDate } from './runner.js';
+import { toMysqlDate, cleanDescription } from './runner.js';
 
 /**
  * Adapter for the Camptocamp (C2C) v6 API `/outings` endpoint.
@@ -172,14 +172,25 @@ export async function* iterateOutings(since) {
  * @returns {Promise<string|null>}
  */
 export async function fetchFirstImageFilename(documentId) {
+  const detail = await fetchOutingDetail(documentId);
+  return firstImageFilename(detail);
+}
+
+/** Fetches the full outing document (detail endpoint). Returns null on failure. */
+export async function fetchOutingDetail(documentId) {
   try {
-    const detail = await getJson(`/outings/${documentId}`, {}, { retries: 2 });
-    const images = detail?.associations?.images ?? [];
-    for (const img of images) {
-      if (img?.filename) return img.filename;
-    }
+    return await getJson(`/outings/${documentId}`, {}, { retries: 2 });
   } catch {
-    // A missing thumbnail is not worth failing the crawl over.
+    // A failed detail fetch must not fail the crawl.
+    return null;
+  }
+}
+
+/** First associated image filename from a detail document, or null. */
+function firstImageFilename(detail) {
+  const images = detail?.associations?.images ?? [];
+  for (const img of images) {
+    if (img?.filename) return img.filename;
   }
   return null;
 }
@@ -189,11 +200,16 @@ export async function fetchFirstImageFilename(documentId) {
  * outing detail, but only when thumbnails are enabled and the outing has images.
  * A short pause is applied to be gentle on the flaky C2C API.
  */
-async function enrichThumbnail(doc) {
-  if (!thumbnailsEnabled() || !(doc?.img_count > 0)) return;
-  const filename = await fetchFirstImageFilename(doc.document_id);
-  if (filename) {
-    doc._thumbnail = buildThumbnailUrl(filename, thumbnailSize());
+async function enrichDetail(doc) {
+  // One detail request per outing provides BOTH the full-text description and
+  // (when present) the first image filename for a thumbnail.
+  const detail = await fetchOutingDetail(doc.document_id);
+  if (detail) {
+    doc._description = pickLocaleField(detail?.locales, 'description');
+    if (thumbnailsEnabled() && doc?.img_count > 0) {
+      const filename = firstImageFilename(detail);
+      if (filename) doc._thumbnail = buildThumbnailUrl(filename, thumbnailSize());
+    }
   }
   const delayMs = Number(optionalEnv('CAMPTOCAMP_DETAIL_DELAY_MS', '250'));
   if (delayMs > 0) await sleep(delayMs);
@@ -226,6 +242,32 @@ function pickLocaleTitle(locales) {
     if (hit) return hit.title;
   }
   return locales.find((l) => l?.title)?.title ?? null;
+}
+
+/**
+ * Picks the best-language value of a locale field (e.g. description,
+ * conditions). Returns null when no locale carries it.
+ */
+function pickLocaleField(locales, field) {
+  if (!Array.isArray(locales) || locales.length === 0) return null;
+  for (const lang of LANG_PREFERENCE) {
+    const hit = locales.find((l) => l?.lang === lang && l?.[field]);
+    if (hit) return hit[field];
+  }
+  return locales.find((l) => l?.[field])?.[field] ?? null;
+}
+
+/**
+ * Picks the best-language summary from a list of locales (may be null).
+ * @param {Array<{lang:string,summary?:string}>} locales
+ */
+function pickLocaleSummary(locales) {
+  if (!Array.isArray(locales) || locales.length === 0) return null;
+  for (const lang of LANG_PREFERENCE) {
+    const hit = locales.find((l) => l?.lang === lang && l?.summary);
+    if (hit) return hit.summary;
+  }
+  return locales.find((l) => l?.summary)?.summary ?? null;
 }
 
 /**
@@ -292,6 +334,9 @@ export function normalize(doc) {
     latitude,
     longitude,
     place: buildPlace(doc?.areas),
+    // Full-text description comes from the detail endpoint (see enrichDetail);
+    // fall back to the (usually empty) list summary. null -> UI uses place.
+    description: cleanDescription(doc?._description ?? pickLocaleSummary(doc?.locales)),
     author: doc?.author?.name ?? null,
     // Thumbnail is resolved from the outing detail during iteration (list items
     // carry no image URL). See enrichThumbnail().
@@ -320,7 +365,7 @@ export function itemDate(doc) {
  */
 async function* iterateEnriched(since) {
   for await (const doc of iterateOutings(since)) {
-    await enrichThumbnail(doc);
+    await enrichDetail(doc);
     yield doc;
   }
 }

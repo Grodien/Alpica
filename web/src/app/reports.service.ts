@@ -12,6 +12,7 @@ export interface Report {
   latitude: number | null;
   longitude: number | null;
   place: string | null;
+  description: string | null;
   author: string | null;
   thumbnail: string | null;
   activity: string | null;

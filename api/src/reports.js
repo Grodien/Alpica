@@ -6,7 +6,7 @@ const DEFAULT_LOOKBACK_DAYS = 30;
 
 const SELECT_COLUMNS = `
   id, source, source_id AS sourceId, title, report_date AS date,
-  latitude, longitude, place, author, thumbnail, activity, url
+  latitude, longitude, place, description, author, thumbnail, activity, url
 `;
 
 /**

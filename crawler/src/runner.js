@@ -89,21 +89,22 @@ async function upsertNormalized(pool, r) {
   await pool.query(
     `INSERT INTO reports
        (source, source_id, title, report_date, latitude, longitude,
-        place, author, thumbnail, activity, url)
+        place, description, author, thumbnail, activity, url)
      VALUES
        (:source, :source_id, :title, :report_date, :latitude, :longitude,
-        :place, :author, :thumbnail, :activity, :url)
+        :place, :description, :author, :thumbnail, :activity, :url)
      ON DUPLICATE KEY UPDATE
         title = VALUES(title),
         report_date = VALUES(report_date),
         latitude = VALUES(latitude),
         longitude = VALUES(longitude),
         place = VALUES(place),
+        description = VALUES(description),
         author = VALUES(author),
         thumbnail = VALUES(thumbnail),
         activity = VALUES(activity),
         url = VALUES(url)`,
-    r
+    { description: null, ...r }
   );
 }
 
@@ -139,4 +140,36 @@ export function toMysqlDate(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.valueOf())) return null;
   return d.toISOString().slice(0, 19).replace('T', ' ');
+}
+
+
+/**
+ * Cleans a source description into short plain text: strips HTML tags, decodes
+ * a few common entities, collapses whitespace, and truncates to `maxLen` chars
+ * (on a word boundary, with an ellipsis). Returns null for empty input.
+ */
+export function cleanDescription(raw, maxLen = 300) {
+  if (raw == null) return null;
+  let t = String(raw);
+  // HTML
+  t = t.replace(/<br\s*\/?>/gi, ' ');      // line breaks -> space
+  t = t.replace(/<[^>]+>/g, ' ');            // strip remaining tags
+  t = t
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'");
+  // Markdown (camptocamp descriptions use it): links, headings, bullets, emphasis.
+  t = t.replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1'); // [text](url)/image -> text
+  t = t.replace(/^#{1,6}\s+/gm, '');                   // ### headings
+  t = t.replace(/^[\s>]*[-*+]\s+/gm, '');              // - / * bullets, blockquotes
+  t = t.replace(/[*_`~]+/g, '');                        // leftover **bold**/_em_/`code`
+  t = t.replace(/\s+/g, ' ').trim();
+  if (t.length === 0) return null;
+  if (t.length <= maxLen) return t;
+  const cut = t.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trimEnd() + '…';
 }

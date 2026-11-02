@@ -3,29 +3,104 @@
   <app-results-list>. The layout is selected by the `app--desktop` / `app--mobile`
   class; the CSS for each lives in clearly separated blocks in home.css.
 
-  - Mobile:  header + slider on top, map (~45% height), scrollable list below.
-  - Desktop: map full width on top, results list underneath (page scrolls).
+  - Mobile:  styled header + search block (bar + Filter + slider) on top, map,
+             scrollable results list, then the footer.
+  - Desktop: simple header + range control, map full width on top, results list
+             underneath (page scrolls).
+
+  The `content` block (map + results) is SHARED by both layouts — there is a
+  single Leaflet #mapEl and a single <app-results-list>. Only the surrounding
+  chrome (header/search/footer) differs per layout and is guarded by isDesktop().
 -->
 <div class="app" [class.app--desktop]="isDesktop()" [class.app--mobile]="!isDesktop()">
-  <header class="app__header">
-    <h1 class="app__title">MountainRadar</h1>
-    <p class="app__subtitle">One Search. More Conditions.</p>
-  </header>
+  @if (isDesktop()) {
+    <header class="app__header">
+      <h1 class="app__title">MountainRadar</h1>
+      <p class="app__subtitle">One Search. More Conditions.</p>
+    </header>
 
-  <div class="range">
-    <span class="range__label">Alle</span>
-    <input
-      type="range"
-      class="range__slider"
-      min="0"
-      [max]="steps.length - 1"
-      step="1"
-      [value]="rangeIndex()"
-      (input)="onRangeInput($event)"
-      aria-label="Datumsbereich"
-    />
-    <span class="range__value">{{ currentStep.label }}</span>
-  </div>
+    <div class="range">
+      <span class="range__label">Alle</span>
+      <input
+        type="range"
+        class="range__slider"
+        min="0"
+        [max]="steps.length - 1"
+        step="1"
+        [value]="rangeIndex()"
+        (input)="onRangeInput($event)"
+        aria-label="Datumsbereich"
+      />
+      <span class="range__value">{{ currentStep.label }}</span>
+    </div>
+  }
+
+  @if (!isDesktop()) {
+    <header class="app__header">
+      <img
+        class="app__logo"
+        src="assets/logo/mountainradar-logo-horizontal-negative.svg"
+        alt="MountainRADAR"
+      />
+    </header>
+
+    <section class="search" aria-label="Suche">
+      <div class="search__bg" aria-hidden="true"></div>
+      <div class="search__bar">
+        <img class="search__icon-img" src="assets/icons/search.svg" alt="" aria-hidden="true" />
+        <input
+          type="search"
+          class="search__input"
+          placeholder="Where do you want to go?"
+          [value]="query()"
+          (input)="onQueryInput($event)"
+          aria-label="Suchort"
+        />
+        <button type="button" class="search__filter" (click)="onFilter()">
+          <img class="search__filter-icon" src="assets/icons/filter.svg" alt="" aria-hidden="true" />
+          Filter
+        </button>
+      </div>
+
+      <!--
+        Custom date-range slider: a track with one dot per step. The fill (green)
+        runs from the start up to the active dot; each label sits directly above
+        its own dot (not space-between). Clicking a dot selects that step.
+      -->
+      <div class="dateslider" role="group" aria-label="Datumsbereich">
+        <div class="dateslider__labels">
+          @for (step of steps; track step.label; let i = $index) {
+            <span
+              class="dateslider__label"
+              [class.dateslider__label--active]="i === rangeIndex()"
+              [style.left.%]="i / (steps.length - 1) * 100"
+            >
+              {{ step.label }}
+            </span>
+          }
+        </div>
+
+        <div class="dateslider__track">
+          <div
+            class="dateslider__fill"
+            [style.width.%]="rangeIndex() / (steps.length - 1) * 100"
+          ></div>
+          @for (step of steps; track step.label; let i = $index) {
+            <button
+              type="button"
+              class="dateslider__dot"
+              [class.dateslider__dot--filled]="i <= rangeIndex()"
+              [class.dateslider__dot--active]="i === rangeIndex()"
+              [style.left.%]="i / (steps.length - 1) * 100"
+              [attr.aria-label]="step.label"
+              [attr.aria-pressed]="i === rangeIndex()"
+              (click)="selectRange(i)"
+            ></button>
+          }
+        </div>
+      </div>
+    </section>
+  }
 
   <div class="content">
     <div class="map-wrap">
@@ -40,6 +115,7 @@
       <app-results-list
         [reports]="orderedResults()"
         [selectedId]="selectedId()"
+        [currentRangeLabel]="currentStep.label"
         (select)="selectReport($event)"
         (hover)="highlightPin($event)"
         (hoverEnd)="unhighlightPin($event)"
@@ -47,4 +123,46 @@
       />
     </section>
   </div>
+
+  @if (!isDesktop()) {
+    <footer class="footer">
+      <img class="footer__illustration" src="assets/footer-mountains.svg" alt="" />
+      <img
+        class="footer__logo"
+        src="assets/logo/mountainradar-logo-negative.svg"
+        alt="MountainRADAR"
+      />
+
+      <div class="footer__cols">
+        <nav class="footer__col" aria-label="Tourenplanung">
+          <h2 class="footer__col-title">Tourenplanung</h2>
+          <ul>
+            <li><a href="#">Verhältnisse</a></li>
+            <li><a href="#">Neueste Fotos</a></li>
+            <li><a href="#">Routen</a></li>
+            <li><a href="#">Hütten</a></li>
+            <li><a href="#">Wegpunkte</a></li>
+            <li><a href="#">Karte</a></li>
+          </ul>
+        </nav>
+
+        <nav class="footer__col" aria-label="Informationen">
+          <h2 class="footer__col-title">Informationen</h2>
+          <ul>
+            <li><a href="#">Rechtliche Aspekte</a></li>
+            <li><a href="#">Datenschutz</a></li>
+            <li><a href="#">Werbung</a></li>
+            <li><a href="#">Spenden</a></li>
+            <li><a href="#">Kontakt</a></li>
+            <li><a href="#">Impressum</a></li>
+          </ul>
+        </nav>
+      </div>
+
+      <p class="footer__attribution">
+        Brought to you by <strong>Bergportal GmbH</strong>, the makers of
+        <a href="https://gipfelbuch.ch/" target="_blank" rel="noopener">Gipfelbuch.ch</a>
+      </p>
+    </footer>
+  }
 </div>

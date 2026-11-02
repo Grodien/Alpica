@@ -1,4 +1,5 @@
 import { optionalEnv, requireEnv } from '@alpica/db/env';
+import { cleanDescription } from './runner.js';
 
 /**
  * Adapter for the skitour.fr API `/sorties` endpoint (ski-touring outings).
@@ -218,6 +219,8 @@ export function normalize(item) {
     latitude,
     longitude,
     place: buildPlace(item),
+    // Trip report (recit) is the richest text; fall back to conditions (cond).
+    description: cleanDescription(item?.recit ?? item?.cond ?? null),
     author: item?.auteur?.pseudo ?? null,
     thumbnail: firstPhoto(item),
     activity: ACTIVITY,

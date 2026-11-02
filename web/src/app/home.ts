@@ -17,21 +17,26 @@ import { activityDisplay } from './activity-icons';
 /** Viewport width (px) at/above which the desktop layout is used. */
 const DESKTOP_BREAKPOINT = 860;
 
-/** Date-range slider steps. */
+/** Date-range slider steps (labels from the Figma mobile design). */
 interface RangeStep {
   label: string;
-  days: number;
+  /** Days back from "now" for from/to. null means "no lower bound" (Alle). */
+  days: number | null;
 }
 const RANGE_STEPS: RangeStep[] = [
-  { label: 'Heute', days: 1 },
-  { label: '7 Tage', days: 7 },
-  { label: '30 Tage', days: 30 },
-  { label: '3 Monate', days: 90 },
+  { label: '3 Tage', days: 3 },
+  { label: '1 Woche', days: 7 },
+  { label: '1 Monat', days: 30 },
+  { label: '6 Monate', days: 180 },
+  { label: 'Alle', days: null },
 ];
 
+/** For "Alle": a lower bound far enough back to include everything. */
+const RANGE_ALL_DAYS = 3650; // ~10 years
+
 /** Default map view (European Alps) used before the first search. */
-const DEFAULT_CENTER: [number, number] = [46.5, 9.5];
-const DEFAULT_ZOOM = 7;
+const DEFAULT_CENTER: [number, number] = [46.8, 9.2];
+const DEFAULT_ZOOM = 9;
 
 /**
  * Skitourenguru tile server (standard XYZ scheme via query params). It serves
@@ -54,10 +59,17 @@ export class Home implements AfterViewInit, OnDestroy {
   @ViewChild('mapEl') private mapEl!: ElementRef<HTMLDivElement>;
 
   protected readonly steps = RANGE_STEPS;
-  protected readonly rangeIndex = signal(2); // default 30 days
+  protected readonly rangeIndex = signal(2); // default "1 Monat" (30 days)
   protected readonly results = signal<Report[]>([]);
   protected readonly loading = signal(false);
   protected readonly selectedId = signal<number | null>(null);
+
+  /**
+   * Free-text search query bound to the mobile search bar. Presentational for
+   * now: it keeps the input controlled but is intentionally NOT wired into the
+   * bbox search, which stays viewport-driven (see refresh()).
+   */
+  protected readonly query = signal('');
 
   /** True on desktop-width viewports. SSR renders the mobile layout by default. */
   protected readonly isDesktop = signal(false);
@@ -132,6 +144,9 @@ export class Home implements AfterViewInit, OnDestroy {
 
       this.layer = leaflet.layerGroup().addTo(this.map);
 
+      // Scale bar (bottom-left), metric only — matches the Figma map design.
+      leaflet.control.scale({ position: 'bottomleft', imperial: false }).addTo(this.map);
+
       // Re-query whenever the viewport settles.
       this.map.on('moveend', () => this.onViewportChanged());
 
@@ -154,10 +169,30 @@ export class Home implements AfterViewInit, OnDestroy {
     this.map?.remove();
   }
 
-  /** Slider change handler. */
+  /** Search bar input handler — keeps the `query` signal controlled. */
+  onQueryInput(event: Event): void {
+    this.query.set((event.target as HTMLInputElement).value);
+  }
+
+  /**
+   * Filter button hook. Stub for now so the yellow Filter button is clickable
+   * without changing the data flow. Filtering will be wired up in a later task.
+   */
+  onFilter(): void {
+    // No-op: presentational hook, no data-flow changes yet.
+  }
+
+  /** Slider change handler (native range input, desktop). */
   onRangeInput(event: Event): void {
     const idx = Number((event.target as HTMLInputElement).value);
     this.rangeIndex.set(idx);
+    this.refresh();
+  }
+
+  /** Custom date-range slider: select a step by index (mobile). */
+  selectRange(i: number): void {
+    if (i < 0 || i >= this.steps.length) return;
+    this.rangeIndex.set(i);
     this.refresh();
   }
 
@@ -191,7 +226,8 @@ export class Home implements AfterViewInit, OnDestroy {
   private range(): { from: string; to: string; limit: number } {
     const to = new Date();
     const from = new Date();
-    from.setUTCDate(from.getUTCDate() - this.currentStep.days);
+    const days = this.currentStep.days ?? RANGE_ALL_DAYS; // Alle -> very wide window
+    from.setUTCDate(from.getUTCDate() - days);
     return { from: from.toISOString(), to: to.toISOString(), limit: 200 };
   }
 

@@ -1,9 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Nunito+Sans:wght@300;400;600&display=swap');
+
 /* Global styles + design tokens shared across components. */
 :root {
-  --accent: #2b6cb0;
-  --ink: #1a2230;
-  --muted: #5a6572;
-  --border: #e2e8f0;
+  /* Font families */
+  --font-title: 'Montserrat', system-ui, sans-serif;
+  --font-body: 'Nunito Sans', system-ui, sans-serif;
+
+  /* Figma brand tokens */
+  --mr-primary: #15427a;   /* primary blue  */
+  --mr-dark:    #0b2442;   /* dark blue     */
+  --mr-light:   #eaf1ff;   /* light         */
+  --mr-text:    #444444;   /* body text     */
+  --mr-highlight: #d4df2a; /* yellow filter */
+  --mr-black:   #000000;
+
+  /* Activity colors */
+  --mr-act-winter:      #0072bb;
+  --mr-act-sommer:      #3b8c47;
+  --mr-act-summer2:     #168b70;
+  --mr-act-bergsteigen: #43526a;
+  --mr-act-klettern:    #404040;
+
+  /* Existing semantic tokens, remapped to the brand palette */
+  --accent: var(--mr-primary); /* was #2b6cb0 -> now brand blue */
+  --ink:    var(--mr-dark);    /* was #1a2230 -> now dark blue  */
+  --muted:  var(--mr-text);    /* was #5a6572 -> now #444       */
+  --border: #e2e8f0;           /* unchanged                     */
 }
 
 html,
@@ -12,4 +34,8 @@ body {
   padding: 0;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--ink);
+}
+
+body {
+  font-family: var(--font-body);
 }

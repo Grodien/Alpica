@@ -1,5 +1,5 @@
 import { optionalEnv } from '@alpica/db/env';
-import { toMysqlDate } from './runner.js';
+import { toMysqlDate, cleanDescription } from './runner.js';
 
 /**
  * Adapter for the PowderGuide Conditions Report API (v2).
@@ -136,6 +136,8 @@ export function normalize(item, spotMap) {
     latitude: spotInfo?.latitude ?? null,
     longitude: spotInfo?.longitude ?? null,
     place,
+    // powderguide has no separate description; subline is used as the title.
+    description: null,
     author: item?.author?.name ?? item?.author?.username ?? null,
     thumbnail,
     activity: item?.activity ?? null,
@@ -152,12 +154,38 @@ export function itemUpdatedAt(item) {
 }
 
 /**
+ * Fetches the full conditions report by uuid and returns its cleaned
+ * `description` text. The list endpoint only carries `subline` (type "mini");
+ * the per-report detail endpoint has the long-form `description`.
+ * Returns null on any failure (a missing description must not fail the crawl).
+ */
+export async function fetchDescription(uuid) {
+  try {
+    const detail = await getJson(`/api/v2/conditions_report/${uuid}`);
+    return cleanDescription(detail?.description ?? null);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Wraps iterateReports and enriches each item with a `_description` from the
+ * detail endpoint, so normalize() stays synchronous.
+ */
+async function* iterateEnriched(since) {
+  for await (const item of iterateReports(since)) {
+    item._description = await fetchDescription(item.uuid);
+    yield item;
+  }
+}
+
+/**
  * Source adapter consumed by the generic crawl runner (see runner.js).
  */
 export const powderguideAdapter = {
   source: SOURCE,
   init: () => fetchSpotLocationMap(),
-  iterate: (since) => iterateReports(since),
+  iterate: (since) => iterateEnriched(since),
   rawId: (item) => item.uuid,
   itemDate: (item) => itemUpdatedAt(item),
   normalize: (item, spotMap) => normalize(item, spotMap),

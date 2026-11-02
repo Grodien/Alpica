@@ -1,5 +1,5 @@
 import { optionalEnv, requireEnv } from '@alpica/db/env';
-import { toMysqlDate } from './runner.js';
+import { toMysqlDate, cleanDescription } from './runner.js';
 
 /**
  * Adapter for the Gipfelbuch.ch V2 API `/api/v2/conditions` endpoint.
@@ -140,6 +140,8 @@ export function normalize(cond) {
     latitude: cond?.spot?.latitude ?? null,
     longitude: cond?.spot?.longitude ?? null,
     place: buildPlace(cond),
+    // Gipfelbuch's closest thing to a description is the route name/notes.
+    description: cleanDescription(cond?.route ?? null),
     author: cond?.author ?? null,
     thumbnail: cond?.image ?? null,
     activity: cond?.activity ?? null,

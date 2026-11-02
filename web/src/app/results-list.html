@@ -13,24 +13,42 @@
         } @else {
           <span class="result__thumb-fallback">{{ display(report.activity).icon }}</span>
         }
+        <span class="result__badge">{{ currentRangeLabel() }}</span>
       </div>
+
       <div class="result__body">
-        <span class="result__activity">
-          {{ display(report.activity).icon }} {{ display(report.activity).label }}
-        </span>
+        <!-- Header row: activity icon + label on the left, date on the right. -->
+        <div class="result__head">
+          <span class="result__activity" [style.color]="display(report.activity).color">
+            <span class="result__activity-icon">{{ display(report.activity).icon }}</span>
+            {{ display(report.activity).label }}
+          </span>
+          @if (report.date) {
+            <span class="result__date">{{ formatDate(report.date) }}</span>
+          }
+        </div>
+
         <h2 class="result__title">{{ report.title || 'Ohne Titel' }}</h2>
-        @if (report.place) {
-          <p class="result__place">{{ report.place }}</p>
-        }
-        <button
-          type="button"
-          class="result__cta"
-          (click)="open.emit(report); $event.stopPropagation()"
-        >
-          Details bei {{ report.source }}
-        </button>
-        @if (report.author) {
-          <p class="result__author">Autor: {{ report.author }}</p>
+
+        <!-- Description (clamped) with the author aligned to the bottom-right. -->
+        <div class="result__descwrap">
+          @if (report.description || report.place) {
+            <p class="result__desc">{{ report.description || report.place }}</p>
+          }
+          @if (report.author) {
+            <span class="result__author">Autor: {{ report.author }}</span>
+          }
+        </div>
+
+        @if (report.url) {
+          <button
+            type="button"
+            class="result__link"
+            (click)="open.emit(report); $event.stopPropagation()"
+          >
+            Bericht auf {{ report.source }}
+            <span class="result__link-icon" aria-hidden="true">↗</span>
+          </button>
         }
       </div>
     </li>

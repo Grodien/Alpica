@@ -67,6 +67,22 @@
   z-index: 500;
 }
 
+/* Leaflet scale bar (bottom-left) — subtle styling to match the map design. */
+:host ::ng-deep .leaflet-control-scale {
+  margin: 0 0 0.6rem 0.6rem;
+}
+:host ::ng-deep .leaflet-control-scale-line {
+  background: rgba(255, 255, 255, 0.7);
+  border: 2px solid var(--mr-dark);
+  border-top: none;
+  color: var(--mr-dark);
+  font-family: var(--font-body);
+  font-size: 11px;
+  line-height: 1.1;
+  padding: 1px 5px 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
 .results__count {
   font-size: 0.85rem;
   color: var(--muted);
@@ -106,41 +122,334 @@
 
 /* ===========================================================================
    MOBILE layout
-   Fills the viewport; header + slider fixed on top, map ~45%, list scrolls.
+   A scrollable top-to-bottom column: header + search block + map + results +
+   footer. The page scrolls vertically (there is a footer below the list); the
+   map keeps a sensible fixed height so it never collapses.
    =========================================================================== */
 .app--mobile {
   max-width: 720px;
   margin: 0 auto;
-  padding: 1rem;
-  height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  background: var(--mr-primary);
+  min-height: 100vh;
 }
 .app--mobile .content {
-  flex: 1;
-  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
+  /* No top padding: the map sits flush against the search block (Figma). */
+  padding: 0 1rem 1rem;
+  background: #fff;
 }
 .app--mobile .map-wrap {
-  flex: 0 0 45%;
+  flex: 0 0 auto;
+  /* Span to the screen edges: cancel the .content horizontal padding. */
+  margin-left: -1rem;
+  margin-right: -1rem;
 }
 .app--mobile .map {
-  min-height: 220px;
+  height: 42vh;
+  min-height: 260px;
+  /* Figma: full-bleed, square corners, no border on mobile. */
+  border-radius: 0;
+  border: none;
+}
+/*
+  Figma "karten shadow": the map carries an INNER shadow around its edge
+  (two layers of #00000040, blur 4, offsets (0,0) and (0,4)). We render it as a
+  non-interactive overlay above the Leaflet canvas so it doesn't block panning.
+*/
+.app--mobile .map-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 400;
+  box-shadow:
+    inset 0 0 4px rgba(0, 0, 0, 0.25),
+    inset 0 4px 4px rgba(0, 0, 0, 0.25);
 }
 .app--mobile .results {
-  flex: 1;
-  min-height: 0;
   display: flex;
   flex-direction: column;
 }
-/* Only the list scrolls. */
+/* The whole page scrolls now (footer sits below the list), so the list itself
+   grows with its content instead of scrolling independently. */
 .app--mobile .results app-results-list {
-  overflow-y: auto;
-  min-height: 0;
-  flex: 1;
+  display: block;
+}
+
+/* --- Mobile header: logo on the brand-blue surface ----------------------- */
+.app--mobile .app__header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  background: var(--mr-primary);
+}
+.app--mobile .app__logo {
+  height: 24px;
+  width: auto;
+  display: block;
+}
+
+/* --- Mobile search block: bar + slider over the mountain background ------- */
+.app--mobile .search {
+  position: relative;
+  /* No bottom padding: the map connects seamlessly below the slider (Figma). */
+  padding: 1rem 1rem 0.75rem;
+  overflow: hidden;
+  isolation: isolate;
+}
+.app--mobile .search__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(180deg, rgba(21, 66, 122, 0.55) 0%, rgba(21, 66, 122, 0.35) 100%),
+    url('/assets/search-bg.png');
+  /* The photo is a wide, short panorama (401x163). Anchor it to the bottom so
+     the mountain ridges stay visible instead of zooming into the peaks only. */
+  background-size: cover, cover;
+  background-position: center, center bottom;
+  background-repeat: no-repeat, no-repeat;
+}
+.app--mobile .search__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 42px;
+  padding: 0 0.35rem 0 0.85rem;
+  background: var(--mr-light);
+  border-radius: 27px;
+}
+.app--mobile .search__icon-img {
+  flex: 0 0 auto;
+  height: 18px;
+  width: auto;
+  display: block;
+}
+.app--mobile .search__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-title);
+  font-size: 15px;
+  color: var(--mr-dark);
+}
+.app--mobile .search__input::placeholder {
+  color: var(--mr-dark);
+  opacity: 0.6;
+}
+.app--mobile .search__filter {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  cursor: pointer;
+  padding: 0 1rem;
+  height: 34px;
+  background: var(--mr-highlight);
+  color: var(--mr-dark);
+  border-radius: 54px;
+  font-family: var(--font-title);
+  font-size: 13px;
+  font-weight: 600;
+}
+.app--mobile .search__filter-icon {
+  height: 16px;
+  width: auto;
+  display: block;
+}
+
+/* --- Mobile custom date-range slider ------------------------------------- */
+/* A track with one dot per step; labels sit directly above their own dot.
+   The fill (brand green) runs from the start up to the active dot. */
+.app--mobile .dateslider {
+  position: relative;
+  margin: 1.5rem 0 0.25rem;
+  /* Horizontal padding so the first/last label + dot don't clip at the edges. */
+  padding: 1.5rem 0.5rem 0;
+}
+
+/* Labels row: each label is absolutely positioned above its dot. */
+.app--mobile .dateslider__labels {
+  position: absolute;
+  top: 0;
+  left: 0.5rem;
+  right: 0.5rem;
+  height: 1.25rem;
+}
+.app--mobile .dateslider__label {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 400;
+  color: #fff;
+  pointer-events: none;
+}
+/* Keep the first label left-aligned and the last right-aligned over their dots. */
+.app--mobile .dateslider__label:first-child {
+  transform: translateX(0);
+}
+.app--mobile .dateslider__label:last-child {
+  transform: translateX(-100%);
+}
+.app--mobile .dateslider__label--active {
+  font-weight: 700;
+  color: var(--mr-highlight);
+}
+
+/* Track: a thin line the dots sit on, within the padded container. */
+.app--mobile .dateslider__track {
+  position: relative;
+  height: 18px;
+  margin: 0 0.5rem;
+}
+.app--mobile .dateslider__track::before {
+  /* The inactive (light) base line across the full width. */
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 2px;
+}
+.app--mobile .dateslider__fill {
+  /* The active (green) portion from the start up to the active dot. */
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: var(--mr-highlight);
+  border-radius: 2px;
+}
+
+/* Dots: round buttons positioned by percentage along the track. */
+.app--mobile .dateslider__dot {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px; /* center on its left% point */
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+.app--mobile .dateslider__dot--filled {
+  background: var(--mr-highlight);
+}
+.app--mobile .dateslider__dot--active {
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  background: var(--mr-highlight);
+  border: 3px solid #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+}
+
+/* --- Mobile footer: illustration + logo + columns + attribution ---------- */
+.app--mobile .footer {
+  position: relative;
+  /* The footer block is blue; the illustration SVG carries its own white->blue
+     transition at the top (translucent grey peaks fading into white), so the
+     footer has NO top padding and the illustration sits flush, blending into
+     the white content above and into this blue block below. */
+  background: var(--mr-primary);
+  color: #fff;
+  padding: 0 1.25rem 1.5rem;
+}
+/*
+  Footer illustration = official designer SVGs ("Berge Footer" grey peaks +
+  "BG" dark firs/foreground) combined. Full-bleed, natural aspect ratio; its
+  translucent top fades into the white page content, its blue base merges into
+  the footer block.
+*/
+.app--mobile .footer__illustration {
+  display: block;
+  margin: 0 -1.25rem -1px; /* full bleed; -1px kills any seam to the block */
+  width: calc(100% + 2.5rem);
+  height: auto;
+}
+.app--mobile .footer__logo {
+  display: block;
+  position: relative;
+  z-index: 1;
+  width: 200px;
+  max-width: 70%;
+  height: auto;
+  /* Pull the logo up so it overlaps the illustration and sits in the small
+     central ridge, instead of leaving a big gap below the mountains. */
+  margin: -2.75rem auto 1.5rem;
+}
+.app--mobile .footer__cols {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.app--mobile .footer__col ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.app--mobile .footer__col li {
+  margin: 0.4rem 0;
+}
+.app--mobile .footer__col-title {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-title);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+  color: #fff;
+}
+.app--mobile .footer__col a {
+  font-family: var(--font-title);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 300;
+  color: #fff;
+  text-decoration: none;
+  opacity: 0.9;
+}
+.app--mobile .footer__col a:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+.app--mobile .footer__attribution {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-title);
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 300;
+  color: var(--mr-light);
+}
+.app--mobile .footer__attribution strong {
+  font-weight: 600;
+}
+.app--mobile .footer__attribution a {
+  color: var(--mr-light);
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 /* ===========================================================================
