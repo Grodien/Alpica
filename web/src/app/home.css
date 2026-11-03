@@ -90,34 +90,56 @@
   flex-shrink: 0;
 }
 
-/* Map pins (Leaflet divIcons render outside this component's view scope). */
+/* Map pins (Leaflet divIcons render outside this component's view scope).
+   A teardrop drop in the category color with a white category icon inside. */
 :host ::ng-deep .pin {
   background: transparent;
   border: none;
 }
-:host ::ng-deep .pin__icon {
+:host ::ng-deep .pin__drop {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 34px;
   height: 34px;
-  font-size: 1.1rem;
-  background: #fff;
-  border: 2px solid var(--accent);
+  /* Category color is set inline via style="background:..." */
+  border: 2px solid #fff;
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
-:host ::ng-deep .pin__icon > * {
+:host ::ng-deep .pin__img {
+  width: 18px;
+  height: 18px;
+  /* Counter-rotate so the icon is upright, and recolor it to white. */
   transform: rotate(45deg);
+  filter: brightness(0) invert(1);
 }
-:host ::ng-deep .pin--hover .pin__icon {
-  background: var(--accent);
-  border-color: #fff;
-  color: #fff;
-  transform: rotate(-45deg) scale(1.25);
-  box-shadow: 0 4px 10px rgba(43, 108, 176, 0.5);
-  z-index: 1000;
+:host ::ng-deep .pin--hover .pin__drop {
+  transform: rotate(-45deg) scale(1.15);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+}
+
+/* Persistent selection highlight (map pin <-> list item). Only one at a time.
+   Same-size pin marked by a blue outline and a gentle pulsing blue ring. */
+:host ::ng-deep .pin--selected .pin__drop {
+  /* Same size as a normal pin — only the blue outline + pulsing ring mark the
+     selection (no scaling of the pin or the icon). */
+  border: 3px solid var(--mr-primary);
+  animation: pin-pulse 1.6s ease-out infinite;
+}
+@keyframes pin-pulse {
+  0% {
+    box-shadow:
+      0 0 0 3px rgba(21, 66, 122, 0.5),
+      0 6px 14px rgba(0, 0, 0, 0.5);
+  }
+  70%,
+  100% {
+    box-shadow:
+      0 0 0 14px rgba(21, 66, 122, 0),
+      0 6px 14px rgba(0, 0, 0, 0.5);
+  }
 }
 
 /* ===========================================================================
@@ -267,6 +289,31 @@
   height: 16px;
   width: auto;
   display: block;
+}
+
+/* Active-filter state + count badge on the Filter button. */
+.app--mobile .search__filter {
+  position: relative;
+}
+.app--mobile .search__filter--active {
+  /* subtle emphasis via a dark outline while any filter is applied */
+  box-shadow: 0 0 0 2px var(--mr-dark);
+}
+.app--mobile .search__filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 2px;
+  border-radius: 999px;
+  background: var(--mr-dark);
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 1;
 }
 
 /* --- Mobile custom date-range slider ------------------------------------- */

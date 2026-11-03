@@ -1,0 +1,164 @@
+:host {
+  display: contents;
+}
+
+/* Dimmed backdrop behind the sheet. */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  animation: fade-in 0.2s ease;
+}
+
+/* The bottom sheet itself. */
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1001;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.25);
+  animation: slide-up 0.25s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* Grab area + handle. */
+.sheet__grab {
+  display: flex;
+  justify-content: center;
+  padding: 0.6rem 0 0.2rem;
+  cursor: grab;
+  /* The drag gesture owns vertical movement here; prevent scroll/selection. */
+  touch-action: none;
+  user-select: none;
+}
+.sheet__grab:active {
+  cursor: grabbing;
+}
+.sheet__handle {
+  width: 44px;
+  height: 5px;
+  border-radius: 999px;
+  background: #c4c9d0;
+}
+
+.sheet__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 1.25rem 0.5rem;
+}
+.sheet__title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--mr-dark);
+}
+.sheet__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  color: var(--mr-dark);
+  cursor: pointer;
+  border-radius: 50%;
+}
+.sheet__close:hover {
+  background: #f0f2f5;
+}
+
+.sheet__body {
+  overflow-y: auto;
+  padding: 0.5rem 1.25rem 1.75rem;
+}
+
+.sheet__section {
+  margin: 1rem 0 0.75rem;
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--mr-dark);
+}
+
+/* Chip grid: chips wrap, sized to content. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.95rem;
+  border: none;
+  border-radius: 999px;
+  background: #eceef1;
+  color: var(--mr-dark);
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.chip__icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+/* Active chip: colored background (set inline) + white icon + white text. */
+.chip--active {
+  color: #fff;
+}
+.chip__icon--active {
+  /* Recolor the single-color icon to white for the active (colored) chip. */
+  filter: brightness(0) invert(1);
+}
+
+/* Source chips have no icon; active = dark pill. */
+.chip--source {
+  padding: 0.5rem 1.1rem;
+}
+.chip--active-dark {
+  background: var(--mr-dark);
+  color: #fff;
+}
+
+/* Reset link-button. */
+.sheet__reset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 1.5rem auto 0;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: none;
+  color: var(--mr-dark);
+  font-family: var(--font-body);
+  font-size: 14px;
+  cursor: pointer;
+}
+.sheet__reset:hover {
+  text-decoration: underline;
+}

@@ -1,40 +1,48 @@
 /**
- * Maps a report's activity string to a display icon (emoji), a readable
- * label, and a color. Activities differ per source (PowderGuide, Camptocamp,
- * skitour.fr), so we normalize loosely by matching keywords. Falls back to a
- * generic mountain.
+ * Maps a report's activity string to a display: a category SVG icon URL, a
+ * readable label, and a color. Activities differ per source (PowderGuide,
+ * Camptocamp, skitour.fr, Gipfelbuch), so we normalize loosely by matching
+ * keywords. Falls back to a generic "other" category.
  *
- * Figma activity colors:
- *   Winter #0072bb · Sommer #3b8c47 · Summer2/misc #168b70 ·
- *   Bergsteigen2 #43526a · Klettern #404040
+ * Activity colors: Winter #0072bb · Sommer #3b8c47 · Summer2/misc #168b70 ·
+ * Bergsteigen2 #43526a · Klettern #404040
+ *
+ * The iconUrl points at the committed category SVGs (single-color), which are
+ * recolored to white on the colored map pins / chips via a CSS filter.
  */
 interface ActivityDisplay {
-  icon: string;
+  iconUrl: string;
   label: string;
   color: string;
 }
 
-const RULES: Array<{ match: RegExp; icon: string; label: string; color: string }> = [
-  { match: /ski.?tour|skitour/i, icon: '🎿', label: 'Skitour', color: '#0072bb' },
-  { match: /freeride/i, icon: '🏂', label: 'Freeride', color: '#0072bb' },
-  { match: /snowshoe|schneeschuh|raquette/i, icon: '🥾', label: 'Schneeschuh', color: '#0072bb' },
-  { match: /ice.?climb|cascade|glace/i, icon: '🧊', label: 'Eisklettern', color: '#0072bb' },
-  { match: /rock.?climb|escalade|klettern/i, icon: '🧗', label: 'Klettern', color: '#404040' },
-  { match: /via.?ferrata|klettersteig/i, icon: '⛓️', label: 'Klettersteig', color: '#43526a' },
-  { match: /mountain.?bike|vtt|bike|velo/i, icon: '🚵', label: 'Bike', color: '#3b8c47' },
-  { match: /paraglid|parapente|gleitschirm/i, icon: '🪂', label: 'Gleitschirm', color: '#168b70' },
-  { match: /mountain.?climb|alpin|mountaineer|hochtour/i, icon: '⛰️', label: 'Hochtour', color: '#43526a' },
-  { match: /hik|rando|wander/i, icon: '🥾', label: 'Wanderung', color: '#3b8c47' },
-  { match: /slackline/i, icon: '🎪', label: 'Slackline', color: '#168b70' },
+const CAT = 'assets/categories';
+
+const RULES: Array<{ match: RegExp } & ActivityDisplay> = [
+  { match: /ski.?tour|skitour/i,                 iconUrl: `${CAT}/ski.svg`,         label: 'Skitour',      color: '#0072bb' },
+  { match: /freeride/i,                           iconUrl: `${CAT}/freeride.svg`,    label: 'Freeride',     color: '#0072bb' },
+  { match: /snowshoe|schneeschuh|raquette/i,      iconUrl: `${CAT}/schneeschuh.svg`, label: 'Schneeschuh',  color: '#0072bb' },
+  { match: /ice.?climb|cascade|glace/i,           iconUrl: `${CAT}/eis.svg`,         label: 'Eisklettern',  color: '#0072bb' },
+  { match: /rock.?climb|escalade|klettern/i,      iconUrl: `${CAT}/klettertour.svg`, label: 'Klettern',     color: '#404040' },
+  { match: /via.?ferrata|klettersteig/i,          iconUrl: `${CAT}/klettersteig.svg`, label: 'Klettersteig', color: '#43526a' },
+  { match: /mountain.?bike|vtt|bike|velo/i,       iconUrl: `${CAT}/bike.svg`,        label: 'Bike',         color: '#3b8c47' },
+  { match: /canyon/i,                             iconUrl: `${CAT}/canyoning.svg`,   label: 'Canyoning',    color: '#168b70' },
+  { match: /paraglid|parapente|gleitschirm/i,     iconUrl: `${CAT}/anderes.svg`,     label: 'Gleitschirm',  color: '#168b70' },
+  { match: /mountain.?climb|alpin|mountaineer|hochtour|snow.?ice/i, iconUrl: `${CAT}/hochtour.svg`, label: 'Hochtour', color: '#43526a' },
+  { match: /hik|rando|wander/i,                   iconUrl: `${CAT}/alpwanderung.svg`, label: 'Wanderung',   color: '#3b8c47' },
 ];
 
-const FALLBACK: ActivityDisplay = { icon: '⛰️', label: 'Tour', color: '#168b70' };
+const FALLBACK: ActivityDisplay = {
+  iconUrl: `${CAT}/anderes.svg`,
+  label: 'Tour',
+  color: '#168b70',
+};
 
 export function activityDisplay(activity: string | null): ActivityDisplay {
   if (!activity) return FALLBACK;
   for (const rule of RULES) {
     if (rule.match.test(activity)) {
-      return { icon: rule.icon, label: rule.label, color: rule.color };
+      return { iconUrl: rule.iconUrl, label: rule.label, color: rule.color };
     }
   }
   return FALLBACK;

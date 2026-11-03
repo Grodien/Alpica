@@ -16,6 +16,7 @@ export interface Report {
   author: string | null;
   thumbnail: string | null;
   activity: string | null;
+  category: string | null;
   url: string | null;
 }
 
@@ -37,6 +38,14 @@ export interface BoundingBox {
   maxLng: number;
 }
 
+/** Optional activity/source filters sent to the server. */
+export interface ReportFilters {
+  /** Normalized category keys (OR-matched via category IN (...)). */
+  categories?: string[];
+  /** DB source keys (OR-matched). */
+  sources?: string[];
+}
+
 /**
  * Talks to the SAME-ORIGIN proxy endpoints (`/api/search`, `/api/bbox`) served
  * by the Angular SSR server (see src/server.ts). Those endpoints inject the
@@ -52,13 +61,23 @@ export class ReportsService {
   private readonly request = inject(REQUEST, { optional: true });
 
   /** Bounding-box search for the current map viewport. */
-  searchByBoundingBox(bbox: BoundingBox, range: DateRange = {}): Observable<SearchResponse> {
+  searchByBoundingBox(
+    bbox: BoundingBox,
+    range: DateRange = {},
+    filters: ReportFilters = {},
+  ): Observable<SearchResponse> {
     let params = new HttpParams()
       .set('minLat', String(bbox.minLat))
       .set('maxLat', String(bbox.maxLat))
       .set('minLng', String(bbox.minLng))
       .set('maxLng', String(bbox.maxLng));
     params = this.applyRange(params, range);
+    if (filters.categories?.length) {
+      params = params.set('categories', filters.categories.join(','));
+    }
+    if (filters.sources?.length) {
+      params = params.set('sources', filters.sources.join(','));
+    }
     return this.http.get<SearchResponse>(`${this.baseUrl()}/api/bbox`, { params });
   }
 

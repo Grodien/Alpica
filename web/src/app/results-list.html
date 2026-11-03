@@ -11,7 +11,12 @@
         @if (report.thumbnail) {
           <img [src]="report.thumbnail" [alt]="report.title ?? 'Bild'" loading="lazy" />
         } @else {
-          <span class="result__thumb-fallback">{{ display(report.activity).icon }}</span>
+          <span
+            class="result__thumb-fallback"
+            [style.--cat-icon]="'url(' + display(report.activity).iconUrl + ')'"
+            [style.--cat-color]="display(report.activity).color"
+            aria-hidden="true"
+          ></span>
         }
         <span class="result__badge">{{ currentRangeLabel() }}</span>
       </div>
@@ -20,7 +25,12 @@
         <!-- Header row: activity icon + label on the left, date on the right. -->
         <div class="result__head">
           <span class="result__activity" [style.color]="display(report.activity).color">
-            <span class="result__activity-icon">{{ display(report.activity).icon }}</span>
+            <span
+              class="result__activity-icon"
+              [style.--cat-icon]="'url(' + display(report.activity).iconUrl + ')'"
+              [style.--cat-color]="display(report.activity).color"
+              aria-hidden="true"
+            ></span>
             {{ display(report.activity).label }}
           </span>
           @if (report.date) {

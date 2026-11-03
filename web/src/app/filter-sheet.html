@@ -1,0 +1,79 @@
+@if (open()) {
+  <div class="sheet-backdrop" (click)="onBackdropClick()"></div>
+
+  <section
+    #sheet
+    class="sheet"
+    [style.transform]="'translateY(' + dragY() + 'px)'"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Filter"
+  >
+    <!-- Drag handle + header: swipe down here to close. -->
+    <div
+      class="sheet__grab"
+      (pointerdown)="onPointerDown($event)"
+      (pointermove)="onPointerMove($event)"
+      (pointerup)="onPointerUp($event)"
+    >
+      <span class="sheet__handle" aria-hidden="true"></span>
+    </div>
+
+    <header class="sheet__header">
+      <h2 class="sheet__title">Filter</h2>
+      <button type="button" class="sheet__close" (click)="close.emit()" aria-label="Schließen">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+        </svg>
+      </button>
+    </header>
+
+    <div class="sheet__body">
+      <!-- Activities -->
+      <h3 class="sheet__section">Aktivitäten</h3>
+      <div class="chips">
+        @for (cat of categories; track cat.key) {
+          <button
+            type="button"
+            class="chip"
+            [class.chip--active]="isActivityActive(cat.key)"
+            [style.background]="isActivityActive(cat.key) ? cat.color : null"
+            (click)="toggleActivity.emit(cat.key)"
+          >
+            <img
+              class="chip__icon"
+              [class.chip__icon--active]="isActivityActive(cat.key)"
+              [src]="cat.icon"
+              alt=""
+              aria-hidden="true"
+            />
+            {{ cat.label }}
+          </button>
+        }
+      </div>
+
+      <!-- Sources -->
+      <h3 class="sheet__section">Quellen</h3>
+      <div class="chips">
+        @for (src of sources; track src.key) {
+          <button
+            type="button"
+            class="chip chip--source"
+            [class.chip--active-dark]="isSourceActive(src.key)"
+            (click)="toggleSource.emit(src.key)"
+          >
+            {{ src.label }}
+          </button>
+        }
+      </div>
+
+      <!-- Reset -->
+      <button type="button" class="sheet__reset" (click)="reset.emit()">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+          <path d="M4 12a8 8 0 1 1 2.3 5.6M4 12V7m0 5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        Filter zurücksetzen
+      </button>
+    </div>
+  </section>
+}

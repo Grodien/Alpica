@@ -56,9 +56,17 @@
           (input)="onQueryInput($event)"
           aria-label="Suchort"
         />
-        <button type="button" class="search__filter" (click)="onFilter()">
+        <button
+          type="button"
+          class="search__filter"
+          [class.search__filter--active]="activeFilterCount() > 0"
+          (click)="onFilter()"
+        >
           <img class="search__filter-icon" src="assets/icons/filter.svg" alt="" aria-hidden="true" />
           Filter
+          @if (activeFilterCount() > 0) {
+            <span class="search__filter-badge" aria-label="aktive Filter">{{ activeFilterCount() }}</span>
+          }
         </button>
       </div>
 
@@ -116,7 +124,7 @@
         [reports]="orderedResults()"
         [selectedId]="selectedId()"
         [currentRangeLabel]="currentStep.label"
-        (select)="selectReport($event)"
+        (select)="selectFromList($event)"
         (hover)="highlightPin($event)"
         (hoverEnd)="unhighlightPin($event)"
         (open)="openReport($event)"
@@ -164,5 +172,17 @@
         <a href="https://gipfelbuch.ch/" target="_blank" rel="noopener">Gipfelbuch.ch</a>
       </p>
     </footer>
+  }
+
+  @if (!isDesktop()) {
+    <app-filter-sheet
+      [open]="filterOpen()"
+      [selectedActivities]="selectedActivities()"
+      [selectedSources]="selectedSources()"
+      (toggleActivity)="toggleActivity($event)"
+      (toggleSource)="toggleSource($event)"
+      (reset)="resetFilters()"
+      (close)="closeFilter()"
+    />
   }
 </div>

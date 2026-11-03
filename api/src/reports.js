@@ -6,7 +6,7 @@ const DEFAULT_LOOKBACK_DAYS = 30;
 
 const SELECT_COLUMNS = `
   id, source, source_id AS sourceId, title, report_date AS date,
-  latitude, longitude, place, description, author, thumbnail, activity, url
+  latitude, longitude, place, description, author, thumbnail, activity, category, url
 `;
 
 /**
@@ -35,7 +35,60 @@ export function parseCommonParams(query) {
     limit,
     from: toMysql(from),
     to: toMysql(to),
+    categories: parseCsvList(query.categories),
+    sources: parseCsvList(query.sources),
   };
+}
+
+/**
+ * Parses a comma-separated list query param into a trimmed, de-duplicated,
+ * lowercased string array. Returns [] when absent/empty.
+ */
+function parseCsvList(raw) {
+  if (typeof raw !== 'string' || raw.trim() === '') return [];
+  const out = [];
+  const seen = new Set();
+  for (const part of raw.split(',')) {
+    const v = part.trim().toLowerCase();
+    if (v && !seen.has(v)) {
+      seen.add(v);
+      out.push(v);
+    }
+  }
+  return out;
+}
+
+/**
+ * Builds the SQL fragment + params for the optional activity/source filters.
+ *   - sources: exact match on the `source` column (OR within the list).
+ *   - activities: the `activity` column holds a comma-separated token list, so
+ *     we match a report when ANY selected token appears in it (OR). We use
+ *     FIND_IN_SET on a normalized (space-stripped) copy so "a, b, c" matches.
+ * Returns { sql: ' AND (...)' , params: {...} } or { sql: '', params: {} }.
+ */
+function buildFilterClause({ categories, sources }) {
+  const clauses = [];
+  const params = {};
+
+  if (Array.isArray(sources) && sources.length) {
+    const names = sources.map((s, i) => {
+      params[`src${i}`] = s;
+      return `:src${i}`;
+    });
+    clauses.push(`LOWER(source) IN (${names.join(', ')})`);
+  }
+
+  if (Array.isArray(categories) && categories.length) {
+    // One canonical category per report (set at crawl time) -> indexed IN().
+    const names = categories.map((c, i) => {
+      params[`cat${i}`] = c;
+      return `:cat${i}`;
+    });
+    clauses.push(`category IN (${names.join(', ')})`);
+  }
+
+  if (clauses.length === 0) return { sql: '', params: {} };
+  return { sql: ' AND ' + clauses.join(' AND '), params };
 }
 
 function clampLimit(raw) {
@@ -112,8 +165,9 @@ function booleanTerm(term) {
  * Bounding-box search: all reports whose coordinates fall within
  * [minLat, maxLat] x [minLng, maxLng] and the date range.
  */
-export async function searchByBoundingBox({ bbox, from, to, limit }) {
+export async function searchByBoundingBox({ bbox, from, to, limit, categories, sources }) {
   const pool = getPool();
+  const filter = buildFilterClause({ categories, sources });
   const [rows] = await pool.query(
     `SELECT ${SELECT_COLUMNS}
        FROM reports
@@ -121,10 +175,10 @@ export async function searchByBoundingBox({ bbox, from, to, limit }) {
         AND latitude IS NOT NULL
         AND longitude IS NOT NULL
         AND latitude BETWEEN :minLat AND :maxLat
-        AND longitude BETWEEN :minLng AND :maxLng
+        AND longitude BETWEEN :minLng AND :maxLng${filter.sql}
       ORDER BY report_date DESC
       LIMIT :limit`,
-    { ...bbox, from, to, limit }
+    { ...bbox, from, to, limit, ...filter.params }
   );
   return rows;
 }

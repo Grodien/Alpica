@@ -1,4 +1,5 @@
 import { optionalEnv } from '@alpica/db/env';
+import { categorize } from './categories.js';
 
 /**
  * Generic crawl runner shared by all source adapters.
@@ -86,13 +87,15 @@ async function upsertRaw(pool, source, sourceId, item) {
 }
 
 async function upsertNormalized(pool, r) {
+  // Derive the single normalized category from the raw activity token list.
+  const row = { description: null, ...r, category: categorize(r.activity) };
   await pool.query(
     `INSERT INTO reports
        (source, source_id, title, report_date, latitude, longitude,
-        place, description, author, thumbnail, activity, url)
+        place, description, author, thumbnail, activity, category, url)
      VALUES
        (:source, :source_id, :title, :report_date, :latitude, :longitude,
-        :place, :description, :author, :thumbnail, :activity, :url)
+        :place, :description, :author, :thumbnail, :activity, :category, :url)
      ON DUPLICATE KEY UPDATE
         title = VALUES(title),
         report_date = VALUES(report_date),
@@ -103,8 +106,9 @@ async function upsertNormalized(pool, r) {
         author = VALUES(author),
         thumbnail = VALUES(thumbnail),
         activity = VALUES(activity),
+        category = VALUES(category),
         url = VALUES(url)`,
-    { description: null, ...r }
+    row
   );
 }
 

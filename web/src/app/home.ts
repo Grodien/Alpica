@@ -12,6 +12,7 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { ReportsService, type BoundingBox, type Report } from './reports.service';
 import { ResultsList } from './results-list';
+import { FilterSheet } from './filter-sheet';
 import { activityDisplay } from './activity-icons';
 
 /** Viewport width (px) at/above which the desktop layout is used. */
@@ -48,7 +49,7 @@ const SKITOURENGURU_TILES = 'https://map.skitourenguru.com/AP_SG_TOPO_MINI.tms?x
 
 @Component({
   selector: 'app-home',
-  imports: [ResultsList],
+  imports: [ResultsList, FilterSheet],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
@@ -70,6 +71,18 @@ export class Home implements AfterViewInit, OnDestroy {
    * bbox search, which stays viewport-driven (see refresh()).
    */
   protected readonly query = signal('');
+
+  /** Filter bottom-sheet state (mobile). */
+  protected readonly filterOpen = signal(false);
+  /** Selected activity category keys (see filter-options.ts). */
+  protected readonly selectedActivities = signal<string[]>([]);
+  /** Selected source keys. */
+  protected readonly selectedSources = signal<string[]>([]);
+
+  /** Total number of active filters (activities + sources) for the button badge. */
+  protected readonly activeFilterCount = computed(
+    () => this.selectedActivities().length + this.selectedSources().length,
+  );
 
   /** True on desktop-width viewports. SSR renders the mobile layout by default. */
   protected readonly isDesktop = signal(false);
@@ -179,8 +192,37 @@ export class Home implements AfterViewInit, OnDestroy {
    * without changing the data flow. Filtering will be wired up in a later task.
    */
   onFilter(): void {
-    // No-op: presentational hook, no data-flow changes yet.
+    this.filterOpen.set(true);
   }
+
+  /** Toggle an activity category in the selection (live). */
+  toggleActivity(key: string): void {
+    this.selectedActivities.update((cur) =>
+      cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key],
+    );
+    this.refresh();
+  }
+
+  /** Toggle a source in the selection (live). */
+  toggleSource(key: string): void {
+    this.selectedSources.update((cur) =>
+      cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key],
+    );
+    this.refresh();
+  }
+
+  /** Clear all filters. */
+  resetFilters(): void {
+    this.selectedActivities.set([]);
+    this.selectedSources.set([]);
+    this.refresh();
+  }
+
+  /** Close the filter sheet; the current filter is already applied live. */
+  closeFilter(): void {
+    this.filterOpen.set(false);
+  }
+
 
   /** Slider change handler (native range input, desktop). */
   onRangeInput(event: Event): void {
@@ -213,7 +255,12 @@ export class Home implements AfterViewInit, OnDestroy {
       maxLng: b.getEast(),
     };
     this.loading.set(true);
-    this.reports.searchByBoundingBox(bbox, this.range()).subscribe({
+    this.reports
+      .searchByBoundingBox(bbox, this.range(), {
+        categories: this.selectedActivities(),
+        sources: this.selectedSources(),
+      })
+      .subscribe({
       next: (res) => {
         this.setResults(res.results);
         this.loading.set(false);
@@ -234,7 +281,12 @@ export class Home implements AfterViewInit, OnDestroy {
   /** Updates results + redraws map markers. */
   private setResults(results: Report[]): void {
     this.results.set(results);
-    this.selectedId.set(null);
+    // Keep the current selection if that report is still in the new results
+    // (e.g. after a pan/zoom refresh); otherwise clear it.
+    const current = this.selectedId();
+    if (current != null && !results.some((r) => r.id === current)) {
+      this.selectedId.set(null);
+    }
     this.drawMarkers(results);
   }
 
@@ -245,11 +297,16 @@ export class Home implements AfterViewInit, OnDestroy {
 
     for (const r of results) {
       if (r.latitude == null || r.longitude == null) continue;
-      const { icon, label } = activityDisplay(r.activity);
+      const { iconUrl, label, color } = activityDisplay(r.activity);
       const marker = this.L.marker([r.latitude, r.longitude], {
         icon: this.L.divIcon({
           className: 'pin',
-          html: `<span class="pin__icon" title="${label}"><span>${icon}</span></span>`,
+          // Teardrop pin in the category color with the white category icon.
+          // The icon SVG is single-color, recolored to white via a CSS filter.
+          html:
+            `<span class="pin__drop" style="background:${color}" title="${label}">` +
+            `<img class="pin__img" src="${iconUrl}" alt="" />` +
+            `</span>`,
           iconSize: [34, 42],
           iconAnchor: [17, 42],
         }),
@@ -258,25 +315,60 @@ export class Home implements AfterViewInit, OnDestroy {
       marker.addTo(this.layer);
       this.markers.set(r.id, marker);
     }
+
+    // Markers were recreated — re-apply the highlight if the selected report is
+    // still on the map.
+    this.applySelectionHighlight(this.selectedId());
   }
 
   /** Pin click -> select the report and move it to the top of the list. */
+  /**
+   * Select a report (from a map pin click OR a list item). The selected report
+   * moves to the top of the list and its map marker gets a persistent highlight.
+   * Only ONE marker can be highlighted at a time.
+   */
   selectReport(id: number): void {
     this.selectedId.set(id);
+    this.applySelectionHighlight(id);
   }
 
-  /** List item hover -> visually highlight the matching map pin. */
+  /**
+   * Selection coming from a LIST item: select as usual, then scroll the map
+   * into view so the highlighted pin is visible (the whole page scrolls on
+   * mobile, and the tapped list row may be far below the map).
+   */
+  selectFromList(id: number): void {
+    this.selectReport(id);
+    if (!isPlatformBrowser(this.platformId)) return;
+    // Defer to the next frame so the list reorder/highlight has applied.
+    setTimeout(() => {
+      this.mapEl?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
+  }
+
+  /** Moves the persistent `pin--selected` highlight to the given marker. */
+  private applySelectionHighlight(id: number | null): void {
+    // Clear the previous selection highlight.
+    for (const marker of this.markers.values()) {
+      marker.getElement()?.classList.remove('pin--selected');
+    }
+    if (id == null) return;
+    const el = this.markers.get(id)?.getElement();
+    if (el) {
+      el.classList.add('pin--selected');
+      // Bring the selected pin to the front.
+      this.markers.get(id)?.setZIndexOffset(1000);
+    }
+  }
+
+  /** List item hover -> dim transient highlight on the matching map pin. */
   highlightPin(id: number): void {
-    const marker = this.markers.get(id);
-    const el = marker?.getElement();
-    el?.classList.add('pin--hover');
+    this.markers.get(id)?.getElement()?.classList.add('pin--hover');
   }
 
-  /** List item hover end -> remove the pin highlight. */
+  /** List item hover end -> remove the transient hover highlight. */
   unhighlightPin(id: number): void {
-    const marker = this.markers.get(id);
-    const el = marker?.getElement();
-    el?.classList.remove('pin--hover');
+    this.markers.get(id)?.getElement()?.classList.remove('pin--hover');
   }
 
   /** List item click -> open the source page. */

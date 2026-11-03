@@ -71,7 +71,7 @@ app.use('/api', proxyCors(), proxyGuard());
 app.get('/api/bbox', (req, res) =>
   proxyToApi(
     '/reports/bbox',
-    ['minLat', 'maxLat', 'minLng', 'maxLng', 'from', 'to', 'limit'],
+    ['minLat', 'maxLat', 'minLng', 'maxLng', 'from', 'to', 'limit', 'categories', 'sources'],
     req,
     res,
   ),
