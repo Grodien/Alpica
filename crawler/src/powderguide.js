@@ -136,8 +136,10 @@ export function normalize(item, spotMap) {
     latitude: spotInfo?.latitude ?? null,
     longitude: spotInfo?.longitude ?? null,
     place,
-    // powderguide has no separate description; subline is used as the title.
-    description: null,
+    // The list item only carries `subline` (used as the title). The long-form
+    // `description` comes from the per-report detail endpoint and is attached
+    // as `_description` during iteration (see iterateEnriched / fetchDescription).
+    description: item?._description ?? null,
     author: item?.author?.name ?? item?.author?.username ?? null,
     thumbnail,
     activity: item?.activity ?? null,
