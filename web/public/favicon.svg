@@ -1,11 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
-  <!-- White rounded tile so the brand mark reads clearly at tab size. -->
-  <rect width="48" height="48" rx="10" fill="#ffffff"/>
-  <!-- MountainRADAR icon (two outlined peaks + one filled green peak),
-       taken from assets/logo/mountainradar-icon.svg and centered. -->
+  <!-- Transparent background; thicker strokes so the mark stays legible at
+       small tab sizes (16/32px). MountainRADAR icon: two outlined peaks +
+       one filled green peak, from assets/logo/mountainradar-icon.svg. -->
   <g transform="translate(2.715, 9.353) scale(0.9607)">
-    <path fill="none" stroke-width="7.5" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(13.864136%, 21.003723%, 34.141541%)" stroke-opacity="1" stroke-miterlimit="10" d="M 508.789062 -118.795313 L 279.0625 279.095312 C 247.890625 333.079687 196.914062 333.079687 165.78125 279.095312 L -63.945312 -118.795313 " transform="matrix(0.1, 0, 0, -0.1, 0, 32.64)"/>
-    <path fill="none" stroke-width="7.5" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(13.864136%, 21.003723%, 34.141541%)" stroke-opacity="1" stroke-miterlimit="10" d="M 426.992188 -47.975 L 259.609375 242.025 C 239.140625 277.415625 205.664062 277.415625 185.234375 242.025 L 17.8125 -47.975 " transform="matrix(0.1, 0, 0, -0.1, 0, 32.64)"/>
+    <path fill="none" stroke-width="15" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(13.864136%, 21.003723%, 34.141541%)" stroke-opacity="1" stroke-miterlimit="10" d="M 508.789062 -118.795313 L 279.0625 279.095312 C 247.890625 333.079687 196.914062 333.079687 165.78125 279.095312 L -63.945312 -118.795313 " transform="matrix(0.1, 0, 0, -0.1, 0, 32.64)"/>
+    <path fill="none" stroke-width="15" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(13.864136%, 21.003723%, 34.141541%)" stroke-opacity="1" stroke-miterlimit="10" d="M 426.992188 -47.975 L 259.609375 242.025 C 239.140625 277.415625 205.664062 277.415625 185.234375 242.025 L 17.8125 -47.975 " transform="matrix(0.1, 0, 0, -0.1, 0, 32.64)"/>
     <path fill-rule="nonzero" fill="rgb(74.610901%, 87.904358%, 19.445801%)" fill-opacity="1" d="M 22.210938 28.441406 L 35.167969 32.699219 L 22.234375 10.296875 L 9.3125 32.679688 L 22.210938 28.441406 "/>
   </g>
 </svg>
