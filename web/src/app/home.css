@@ -509,8 +509,12 @@
   display: block;
   position: relative;
   z-index: 1;
-  width: 200px;
-  max-width: 70%;
+  /* The logo lockup includes a thin "One Search. All Conditions." tagline at
+     the bottom, which becomes illegible when the logo is scaled down too far.
+     Keep a legible floor (240px) and only grow with the viewport, capping at
+     280px. The footer block has 1.25rem side padding, so 240px fits phones
+     down to ~290px wide without overflow. */
+  width: clamp(260px, 78vw, 320px);
   height: auto;
   /* Pull the logo up so it overlaps the illustration and sits in the small
      central ridge, instead of leaving a big gap below the mountains. */
@@ -522,17 +526,17 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
   margin: 0.5rem 0 2rem;
 }
 .app--mobile .footer__links a {
   font-family: var(--font-title);
-  font-size: 17px;
+  font-size: 14px;
   line-height: 1.2;
   font-weight: 400;
-  color: #fff;
+  color: var(--mr-light);
   text-decoration: none;
-  opacity: 0.95;
+  opacity: 0.9;
 }
 .app--mobile .footer__links a:hover {
   opacity: 1;
