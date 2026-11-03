@@ -580,19 +580,19 @@
   background: var(--mr-primary);
   isolation: isolate;
 }
-/* The panorama background is clipped to the header, but the header itself must
-   NOT clip the dropdown menus that overflow below it. */
-.app--desktop .dheader__bg {
-  border-radius: inherit;
-}
+/* Faint "Bergpanorama" silhouette behind the desktop header (from Figma).
+   A compact grayscale raster (header-panorama.webp) stretched edge-to-edge;
+   the Figma treatment — 16% opacity + hard-light blend — is applied here in
+   CSS so the silhouette reads as a faint lighter-blue over the primary header.
+   Clipped to the header, but must NOT clip the dropdown menus overflowing below. */
 .app--desktop .dheader__bg {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background:
-    linear-gradient(180deg, rgba(11, 36, 66, 0.2), rgba(11, 36, 66, 0.55)),
-    url('/assets/search-bg.png') center / cover no-repeat;
-  opacity: 0.9;
+  border-radius: inherit;
+  background: url('/assets/header-panorama.webp') center bottom / 100% 100% no-repeat;
+  opacity: 0.16;
+  mix-blend-mode: hard-light;
 }
 .app--desktop .dheader__logo {
   display: block;
