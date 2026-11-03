@@ -41,8 +41,8 @@ export interface FilterSource {
 }
 
 export const FILTER_SOURCES: FilterSource[] = [
-  { key: 'camptocamp',  label: 'Camp2Camp.org' },
-  { key: 'gipfelbuch',  label: 'Gipfelbuch.ch' },
-  { key: 'powderguide', label: 'powderguide.com' },
-  { key: 'skitour',     label: 'skitour.fr' },
+  { key: 'camptocamp',  label: 'camptocamp' },
+  { key: 'gipfelbuch',  label: 'Gipfelbuch' },
+  { key: 'powderguide', label: 'POWDERGUIDE' },
+  { key: 'skitour',     label: 'Skitour' },
 ];

@@ -112,6 +112,9 @@ export class Home implements AfterViewInit, OnDestroy {
   private map: import('leaflet').Map | null = null;
   private markers = new Map<number, import('leaflet').Marker>();
   private layer: import('leaflet').LayerGroup | null = null;
+  private userMarker: import('leaflet').Marker | null = null;
+  /** True while a geolocation request is in flight (for button state). */
+  protected readonly locating = signal(false);
   private moveDebounce: ReturnType<typeof setTimeout> | null = null;
 
   get currentStep(): RangeStep {
@@ -137,7 +140,8 @@ export class Home implements AfterViewInit, OnDestroy {
       this.map = leaflet.map(this.mapEl.nativeElement, {
         center: DEFAULT_CENTER,
         zoom: DEFAULT_ZOOM,
-        zoomControl: true,
+        // Zoom buttons are hidden on mobile (pinch-to-zoom is used there).
+        zoomControl: this.isDesktop(),
         // Hide the "Leaflet" attribution badge in the corner.
         attributionControl: false,
       });
@@ -322,6 +326,44 @@ export class Home implements AfterViewInit, OnDestroy {
   }
 
   /** Pin click -> select the report and move it to the top of the list. */
+  /**
+   * Centers the map on the user's current position and drops a location marker.
+   * Uses the browser Geolocation API; no-op outside the browser.
+   */
+  locate(): void {
+    if (!isPlatformBrowser(this.platformId) || !navigator.geolocation) return;
+    this.locating.set(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        this.locating.set(false);
+        const { latitude, longitude } = pos.coords;
+        if (!this.L || !this.map) return;
+        const latlng: [number, number] = [latitude, longitude];
+        // Drop/replace a simple location dot marker.
+        if (this.userMarker) {
+          this.userMarker.setLatLng(latlng);
+        } else {
+          this.userMarker = this.L.marker(latlng, {
+            icon: this.L.divIcon({
+              className: 'user-loc',
+              html: '<span class="user-loc__dot"></span>',
+              iconSize: [20, 20],
+              iconAnchor: [10, 10],
+            }),
+            interactive: false,
+            keyboard: false,
+          }).addTo(this.map);
+        }
+        this.map.setView(latlng, Math.max(this.map.getZoom(), 12));
+      },
+      (err) => {
+        this.locating.set(false);
+        console.warn('[geolocation] failed:', err.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
+  }
+
   /**
    * Select a report (from a map pin click OR a list item). The selected report
    * moves to the top of the list and its map marker gets a persistent highlight.

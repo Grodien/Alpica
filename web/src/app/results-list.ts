@@ -1,5 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { activityDisplay } from './activity-icons';
+import { sourceDisplay } from './source-display';
 import type { Report } from './reports.service';
 
 /**
@@ -27,6 +28,7 @@ export class ResultsList {
   readonly open = output<Report>();
 
   protected readonly display = activityDisplay;
+  protected readonly sourceName = sourceDisplay;
 
   /**
    * Formats a report date ("YYYY-MM-DD hh:mm:ss" or ISO) into the Swiss/German

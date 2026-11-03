@@ -56,7 +56,7 @@
             class="result__link"
             (click)="open.emit(report); $event.stopPropagation()"
           >
-            Bericht auf {{ report.source }}
+            Bericht auf {{ sourceName(report.source) }}
             <span class="result__link-icon" aria-hidden="true">↗</span>
           </button>
         }

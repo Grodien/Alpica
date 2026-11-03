@@ -46,27 +46,36 @@
 
     <section class="search" aria-label="Suche">
       <div class="search__bg" aria-hidden="true"></div>
-      <div class="search__bar">
-        <img class="search__icon-img" src="assets/icons/search.svg" alt="" aria-hidden="true" />
-        <input
-          type="search"
-          class="search__input"
-          placeholder="Where do you want to go?"
-          [value]="query()"
-          (input)="onQueryInput($event)"
-          aria-label="Suchort"
-        />
+      <div class="search__row">
+        <!-- Search pill (icon + input), no filter button inside. -->
+        <div class="search__bar">
+          <img class="search__icon-img" src="assets/icons/search.svg" alt="" aria-hidden="true" />
+          <input
+            type="search"
+            class="search__input"
+            placeholder="Wo geht es hin?"
+            [value]="query()"
+            (input)="onQueryInput($event)"
+            aria-label="Suchort"
+          />
+        </div>
+
+        <!-- Separate round, icon-only filter button. A generic indicator icon
+             (not a count) shows when any filter is active. -->
         <button
           type="button"
           class="search__filter"
           [class.search__filter--active]="activeFilterCount() > 0"
           (click)="onFilter()"
+          aria-label="Filter"
+          [attr.aria-pressed]="activeFilterCount() > 0"
         >
-          <img class="search__filter-icon" src="assets/icons/filter.svg" alt="" aria-hidden="true" />
-          Filter
-          @if (activeFilterCount() > 0) {
-            <span class="search__filter-badge" aria-label="aktive Filter">{{ activeFilterCount() }}</span>
-          }
+          <img
+            class="search__filter-icon"
+            [src]="activeFilterCount() > 0 ? 'assets/icons/filter-active.svg' : 'assets/icons/filter.svg'"
+            alt=""
+            aria-hidden="true"
+          />
         </button>
       </div>
 
@@ -78,13 +87,16 @@
       <div class="dateslider" role="group" aria-label="Datumsbereich">
         <div class="dateslider__labels">
           @for (step of steps; track step.label; let i = $index) {
-            <span
+            <button
+              type="button"
               class="dateslider__label"
               [class.dateslider__label--active]="i === rangeIndex()"
               [style.left.%]="i / (steps.length - 1) * 100"
+              [attr.aria-pressed]="i === rangeIndex()"
+              (click)="selectRange(i)"
             >
               {{ step.label }}
-            </span>
+            </button>
           }
         </div>
 
@@ -116,6 +128,23 @@
       @if (loading()) {
         <div class="map__loading">Lade…</div>
       }
+      <!-- Locate-me button: centers the map on the user's position. -->
+      <button
+        type="button"
+        class="map__locate"
+        [class.map__locate--busy]="locating()"
+        (click)="locate()"
+        aria-label="Meinen Standort anzeigen"
+        title="Meinen Standort anzeigen"
+      >
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path
+            d="M12 8a4 4 0 100 8 4 4 0 000-8zm0-5v3m0 12v3m9-9h-3M6 12H3"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          />
+          <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+        </svg>
+      </button>
     </div>
 
     <section class="results">
@@ -141,35 +170,15 @@
         alt="MountainRADAR"
       />
 
-      <div class="footer__cols">
-        <nav class="footer__col" aria-label="Tourenplanung">
-          <h2 class="footer__col-title">Tourenplanung</h2>
-          <ul>
-            <li><a href="#">Verhältnisse</a></li>
-            <li><a href="#">Neueste Fotos</a></li>
-            <li><a href="#">Routen</a></li>
-            <li><a href="#">Hütten</a></li>
-            <li><a href="#">Wegpunkte</a></li>
-            <li><a href="#">Karte</a></li>
-          </ul>
-        </nav>
-
-        <nav class="footer__col" aria-label="Informationen">
-          <h2 class="footer__col-title">Informationen</h2>
-          <ul>
-            <li><a href="#">Rechtliche Aspekte</a></li>
-            <li><a href="#">Datenschutz</a></li>
-            <li><a href="#">Werbung</a></li>
-            <li><a href="#">Spenden</a></li>
-            <li><a href="#">Kontakt</a></li>
-            <li><a href="#">Impressum</a></li>
-          </ul>
-        </nav>
-      </div>
+      <nav class="footer__links" aria-label="Rechtliches">
+        <a href="#">Impressum</a>
+        <a href="#">Datenschutz</a>
+        <a href="#">Rechtliche Aspekte</a>
+      </nav>
 
       <p class="footer__attribution">
-        Brought to you by <strong>Bergportal GmbH</strong>, the makers of
-        <a href="https://gipfelbuch.ch/" target="_blank" rel="noopener">Gipfelbuch.ch</a>
+        Eine Dienstleistung der <strong>Bergportal GmbH</strong>, den Machern von
+        <a href="https://gipfelbuch.ch/" target="_blank" rel="noopener">Gipfelbuch</a>
       </p>
     </footer>
   }

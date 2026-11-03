@@ -97,6 +97,11 @@
   font-size: 18px;
   color: var(--mr-dark);
 }
+/* Extra breathing room above the second section ("Quellen"), so the activity
+   chips aren't crowded against the next heading. */
+.sheet__section + .chips + .sheet__section {
+  margin-top: 2rem;
+}
 
 /* Chip grid: chips wrap, sized to content. */
 .chips {
