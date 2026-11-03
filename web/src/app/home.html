@@ -96,7 +96,7 @@
   }
 
   @if (!isDesktop()) {
-    <header class="app__header">
+    <header class="app__header" #mobileHeader>
       <img
         class="app__logo"
         src="assets/logo/mountainradar-logo-horizontal-negative.svg"
@@ -104,7 +104,7 @@
       />
     </header>
 
-    <section class="search" aria-label="Suche">
+    <section class="search" aria-label="Suche" #mobileSearch>
       <div class="search__bg" aria-hidden="true"></div>
       <div class="search__row">
         <!-- Search pill (icon + input + clear), no filter button inside.
@@ -233,7 +233,6 @@
       <app-results-list
         [reports]="orderedResults()"
         [selectedId]="selectedId()"
-        [currentRangeLabel]="currentStep.label"
         (select)="selectFromList($event)"
         (hover)="highlightPin($event)"
         (hoverEnd)="unhighlightPin($event)"
@@ -274,7 +273,7 @@
 
       <p class="footer__attribution">
         Eine Dienstleistung der <strong>Bergportal GmbH</strong>, den Machern von
-        <a href="https://gipfelbuch.ch/" target="_blank" rel="noopener">Gipfelbuch</a>
+        <a href="https://gipfelbuch.ch/" target="_blank" rel="noopener">Gipfelbuch.ch</a>
       </p>
     </footer>
   }

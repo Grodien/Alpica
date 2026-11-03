@@ -19,7 +19,9 @@
             aria-hidden="true"
           ></span>
         }
-        <span class="result__badge">{{ currentRangeLabel() }}</span>
+        @if (showAgeBadge(report.date)) {
+          <span class="result__badge">{{ ageLabel(report.date) }}</span>
+        }
       </div>
 
       <div class="result__body">

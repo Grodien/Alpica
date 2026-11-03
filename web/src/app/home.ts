@@ -61,6 +61,10 @@ export class Home implements AfterViewInit, OnDestroy {
 
   @ViewChild('mapEl') private mapEl!: ElementRef<HTMLDivElement>;
   @ViewChild('resultsPanel') private resultsPanel?: ElementRef<HTMLElement>;
+  // Mobile-only sticky chrome, used to offset the scroll-to-map so the map is
+  // not hidden behind the pinned header + search block.
+  @ViewChild('mobileHeader') private mobileHeader?: ElementRef<HTMLElement>;
+  @ViewChild('mobileSearch') private mobileSearch?: ElementRef<HTMLElement>;
 
   protected readonly steps = RANGE_STEPS;
 
@@ -474,9 +478,18 @@ export class Home implements AfterViewInit, OnDestroy {
     this.applySelectionHighlight(id);
     if (!isPlatformBrowser(this.platformId)) return;
     if (!this.isDesktop()) {
-      // Mobile: bring the map (with the highlighted pin) into view.
+      // Mobile: bring the map (with the highlighted pin) into view. The header
+      // and search block are sticky, so a plain scrollIntoView({block:'start'})
+      // would leave the map top hidden behind them. Scroll the window so the
+      // map top lands just below the combined sticky-chrome height instead.
       setTimeout(() => {
-        this.mapEl?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const mapEl = this.mapEl?.nativeElement;
+        if (!mapEl) return;
+        const stickyOffset =
+          (this.mobileHeader?.nativeElement?.offsetHeight ?? 0) +
+          (this.mobileSearch?.nativeElement?.offsetHeight ?? 0);
+        const top = mapEl.getBoundingClientRect().top + window.scrollY - stickyOffset;
+        window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
       }, 0);
     }
   }
