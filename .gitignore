@@ -38,9 +38,3 @@ Thumbs.db
 coverage/
 tmp/
 temp/
-
-# Brand logo source package (raw EPS/PNG originals; converted SVGs live in web/src/assets/logo/)
-Logo-Kundenpaket/
-
-# Category icon source package (raw SVGs; working copies live in web/src/assets/categories/)
-Kategorien/
