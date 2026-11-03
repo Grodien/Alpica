@@ -14,25 +14,85 @@
 -->
 <div class="app" [class.app--desktop]="isDesktop()" [class.app--mobile]="!isDesktop()">
   @if (isDesktop()) {
-    <header class="app__header">
-      <h1 class="app__title">MountainRadar</h1>
-      <p class="app__subtitle">One Search. More Conditions.</p>
-    </header>
+    <!-- Desktop header: logo + search + horizontal date slider + two filter
+         dropdowns, on the mountain-panorama blue bar. -->
+    <header class="dheader">
+      <div class="dheader__bg" aria-hidden="true"></div>
 
-    <div class="range">
-      <span class="range__label">Alle</span>
-      <input
-        type="range"
-        class="range__slider"
-        min="0"
-        [max]="steps.length - 1"
-        step="1"
-        [value]="rangeIndex()"
-        (input)="onRangeInput($event)"
-        aria-label="Datumsbereich"
+      <img
+        class="dheader__logo"
+        src="assets/logo/mountainradar-logo-horizontal-negative.svg"
+        alt="MountainRADAR"
       />
-      <span class="range__value">{{ currentStep.label }}</span>
-    </div>
+
+      <div class="dheader__row">
+        <!-- Search pill -->
+        <div class="dsearch">
+          <button type="button" class="dsearch__icon-btn" (click)="onSearchSubmit()" aria-label="Suchen">
+            <img class="dsearch__icon" src="assets/icons/search.svg" alt="" aria-hidden="true" />
+          </button>
+          <input
+            type="search"
+            class="dsearch__input"
+            placeholder="Wo geht es hin?"
+            [value]="query()"
+            (input)="onQueryInput($event)"
+            (keyup.enter)="onSearchSubmit()"
+            aria-label="Suchort"
+          />
+          @if (query()) {
+            <button type="button" class="dsearch__clear" (click)="clearSearch()" aria-label="Suche zurücksetzen">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+              </svg>
+            </button>
+          }
+        </div>
+
+        <!-- Horizontal date-range slider -->
+        <div class="dslider" role="group" aria-label="Datumsbereich">
+          <div class="dslider__labels">
+            @for (step of steps; track step.label; let i = $index) {
+              <button
+                type="button"
+                class="dslider__label"
+                [class.dslider__label--active]="i === rangeIndex()"
+                [style.left.%]="i / (steps.length - 1) * 100"
+                (click)="selectRange(i)"
+              >{{ step.label }}</button>
+            }
+          </div>
+          <div class="dslider__track">
+            <div class="dslider__fill" [style.width.%]="rangeIndex() / (steps.length - 1) * 100"></div>
+            @for (step of steps; track step.label; let i = $index) {
+              <button
+                type="button"
+                class="dslider__dot"
+                [class.dslider__dot--filled]="i <= rangeIndex()"
+                [class.dslider__dot--active]="i === rangeIndex()"
+                [style.left.%]="i / (steps.length - 1) * 100"
+                [attr.aria-label]="step.label"
+                (click)="selectRange(i)"
+              ></button>
+            }
+          </div>
+        </div>
+
+        <!-- Category + source multi-select dropdowns -->
+        <app-filter-dropdown
+          placeholder="Alle Kategorien"
+          [options]="categoryOptions"
+          [selected]="selectedActivities()"
+          (toggle)="toggleActivity($event)"
+        />
+        <app-filter-dropdown
+          placeholder="Alle Quellen"
+          [options]="sourceOptions"
+          [selected]="selectedSources()"
+          (toggle)="toggleSource($event)"
+        />
+      </div>
+    </header>
   }
 
   @if (!isDesktop()) {
@@ -47,17 +107,38 @@
     <section class="search" aria-label="Suche">
       <div class="search__bg" aria-hidden="true"></div>
       <div class="search__row">
-        <!-- Search pill (icon + input), no filter button inside. -->
+        <!-- Search pill (icon + input + clear), no filter button inside.
+             Enter submits a free-text API search. -->
         <div class="search__bar">
-          <img class="search__icon-img" src="assets/icons/search.svg" alt="" aria-hidden="true" />
+          <button
+            type="button"
+            class="search__icon-btn"
+            (click)="onSearchSubmit()"
+            aria-label="Suchen"
+          >
+            <img class="search__icon-img" src="assets/icons/search.svg" alt="" aria-hidden="true" />
+          </button>
           <input
             type="search"
             class="search__input"
             placeholder="Wo geht es hin?"
             [value]="query()"
             (input)="onQueryInput($event)"
+            (keyup.enter)="onSearchSubmit()"
             aria-label="Suchort"
           />
+          @if (query()) {
+            <button
+              type="button"
+              class="search__clear"
+              (click)="clearSearch()"
+              aria-label="Suche zurücksetzen"
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+              </svg>
+            </button>
+          }
         </div>
 
         <!-- Separate round, icon-only filter button. A generic indicator icon
@@ -147,7 +228,7 @@
       </button>
     </div>
 
-    <section class="results">
+    <section class="results" #resultsPanel>
       <p class="results__count">{{ results().length }} Ergebnisse</p>
       <app-results-list
         [reports]="orderedResults()"
@@ -160,6 +241,21 @@
       />
     </section>
   </div>
+
+  @if (isDesktop()) {
+    <footer class="dfooter">
+      <p class="dfooter__attribution">
+        One Search. All Conditions.<br />
+        Eine Dienstleistung der <strong>Bergportal GmbH</strong>, den Machern von
+        <a href="https://gipfelbuch.ch/" target="_blank" rel="noopener">Gipfelbuch</a>
+      </p>
+      <nav class="dfooter__links" aria-label="Rechtliches">
+        <a href="#">Impressum</a>
+        <a href="#">Datenschutz</a>
+        <a href="#">Rechtliche Aspekte</a>
+      </nav>
+    </footer>
+  }
 
   @if (!isDesktop()) {
     <footer class="footer">

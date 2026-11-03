@@ -81,6 +81,23 @@ export class ReportsService {
     return this.http.get<SearchResponse>(`${this.baseUrl()}/api/bbox`, { params });
   }
 
+  /** Free-text search across all reports (not viewport-bound). */
+  searchByText(
+    q: string,
+    range: DateRange = {},
+    filters: ReportFilters = {},
+  ): Observable<SearchResponse> {
+    let params = new HttpParams().set('q', q);
+    params = this.applyRange(params, range);
+    if (filters.categories?.length) {
+      params = params.set('categories', filters.categories.join(','));
+    }
+    if (filters.sources?.length) {
+      params = params.set('sources', filters.sources.join(','));
+    }
+    return this.http.get<SearchResponse>(`${this.baseUrl()}/api/search`, { params });
+  }
+
   private applyRange(params: HttpParams, range: DateRange): HttpParams {
     if (range.from) params = params.set('from', range.from);
     if (range.to) params = params.set('to', range.to);

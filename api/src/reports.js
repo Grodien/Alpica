@@ -108,23 +108,25 @@ function toMysql(d) {
 }
 
 /**
- * Freetext search across all text fields (title, place, author, activity).
+ * Freetext search across all text fields (title, place, author, activity,
+ * description).
  * Uses the FULLTEXT index when the term looks usable, otherwise falls back to
  * LIKE so short terms still work.
  */
-export async function searchByText({ q, from, to, limit }) {
+export async function searchByText({ q, from, to, limit, categories, sources }) {
   const pool = getPool();
   const term = (q ?? '').trim();
+  const filter = buildFilterClause({ categories, sources });
 
   if (term.length === 0) {
     // No search term: just return the most recent reports in range.
     const [rows] = await pool.query(
       `SELECT ${SELECT_COLUMNS}
          FROM reports
-        WHERE report_date BETWEEN :from AND :to
+        WHERE report_date BETWEEN :from AND :to${filter.sql}
         ORDER BY report_date DESC
         LIMIT :limit`,
-      { from, to, limit }
+      { from, to, limit, ...filter.params }
     );
     return rows;
   }
@@ -133,17 +135,18 @@ export async function searchByText({ q, from, to, limit }) {
   const [rows] = await pool.query(
     `SELECT ${SELECT_COLUMNS}
        FROM reports
-      WHERE report_date BETWEEN :from AND :to
+      WHERE report_date BETWEEN :from AND :to${filter.sql}
         AND (
-          MATCH (title, place, author, activity) AGAINST (:term IN BOOLEAN MODE)
+          MATCH (title, place, author, activity, description) AGAINST (:term IN BOOLEAN MODE)
           OR title LIKE :like
           OR place LIKE :like
           OR author LIKE :like
           OR activity LIKE :like
+          OR description LIKE :like
         )
       ORDER BY report_date DESC
       LIMIT :limit`,
-    { from, to, limit, term: booleanTerm(term), like }
+    { from, to, limit, term: booleanTerm(term), like, ...filter.params }
   );
   return rows;
 }

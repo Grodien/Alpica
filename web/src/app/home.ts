@@ -13,6 +13,8 @@ import { isPlatformBrowser } from '@angular/common';
 import { ReportsService, type BoundingBox, type Report } from './reports.service';
 import { ResultsList } from './results-list';
 import { FilterSheet } from './filter-sheet';
+import { FilterDropdown } from './filter-dropdown';
+import { FILTER_CATEGORIES, FILTER_SOURCES } from './filter-options';
 import { activityDisplay } from './activity-icons';
 
 /** Viewport width (px) at/above which the desktop layout is used. */
@@ -49,7 +51,7 @@ const SKITOURENGURU_TILES = 'https://map.skitourenguru.com/AP_SG_TOPO_MINI.tms?x
 
 @Component({
   selector: 'app-home',
-  imports: [ResultsList, FilterSheet],
+  imports: [ResultsList, FilterSheet, FilterDropdown],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
@@ -58,8 +60,21 @@ export class Home implements AfterViewInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
 
   @ViewChild('mapEl') private mapEl!: ElementRef<HTMLDivElement>;
+  @ViewChild('resultsPanel') private resultsPanel?: ElementRef<HTMLElement>;
 
   protected readonly steps = RANGE_STEPS;
+
+  /** Desktop dropdown options (reuse the mobile filter definitions). */
+  protected readonly categoryOptions = FILTER_CATEGORIES.map((c) => ({
+    key: c.key,
+    label: c.label,
+    icon: c.icon,
+    color: c.color,
+  }));
+  protected readonly sourceOptions = FILTER_SOURCES.map((sr) => ({
+    key: sr.key,
+    label: sr.label,
+  }));
   protected readonly rangeIndex = signal(2); // default "1 Monat" (30 days)
   protected readonly results = signal<Report[]>([]);
   protected readonly loading = signal(false);
@@ -71,6 +86,10 @@ export class Home implements AfterViewInit, OnDestroy {
    * bbox search, which stays viewport-driven (see refresh()).
    */
   protected readonly query = signal('');
+
+  /** The currently APPLIED search term (empty = viewport/bbox mode). While a
+      term is active, pan/zoom does NOT trigger a new search. */
+  protected readonly searchTerm = signal('');
 
   /** Filter bottom-sheet state (mobile). */
   protected readonly filterOpen = signal(false);
@@ -94,6 +113,10 @@ export class Home implements AfterViewInit, OnDestroy {
    */
   protected readonly orderedResults = computed<Report[]>(() => {
     const all = this.results();
+    // Desktop: never reorder — the selected item is shown in place (and the
+    // list scrolls to it on a pin click). Mobile: move the selected item to the
+    // top so it's immediately visible above the fold.
+    if (this.isDesktop()) return all;
     const id = this.selectedId();
     if (id == null) return all;
     const selected = all.find((r) => r.id === id);
@@ -192,8 +215,57 @@ export class Home implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Filter button hook. Stub for now so the yellow Filter button is clickable
-   * without changing the data flow. Filtering will be wired up in a later task.
+   * Submit the free-text search (Enter in the search field). Runs an API text
+   * search across ALL reports, then fits the map to the results. While a term
+   * is active, map pan/zoom no longer triggers a bbox search (see refresh()).
+   */
+  onSearchSubmit(): void {
+    const term = this.query().trim();
+    this.searchTerm.set(term);
+    if (term.length === 0) {
+      // Empty submit behaves like clearing: go back to viewport search.
+      this.refresh();
+      return;
+    }
+    this.loading.set(true);
+    this.reports
+      .searchByText(term, this.range(), {
+        categories: this.selectedActivities(),
+        sources: this.selectedSources(),
+      })
+      .subscribe({
+        next: (res) => {
+          this.setResults(res.results);
+          this.loading.set(false);
+          this.fitMapToResults(res.results);
+        },
+        error: () => this.loading.set(false),
+      });
+  }
+
+  /** Clear the search term and return to viewport (bbox) search. */
+  clearSearch(): void {
+    this.query.set('');
+    this.searchTerm.set('');
+    this.refresh();
+  }
+
+  /** Fits the map view to show all geolocated results (if any). */
+  private fitMapToResults(results: Report[]): void {
+    if (!this.L || !this.map) return;
+    const pts = results
+      .filter((r) => r.latitude != null && r.longitude != null)
+      .map((r) => [r.latitude as number, r.longitude as number] as [number, number]);
+    if (pts.length === 0) return;
+    const bounds = this.L.latLngBounds(pts);
+    // suppressNextSearch: fitBounds triggers moveend, but we must NOT run a bbox
+    // search for it (we're in search mode). refresh() already guards on
+    // searchTerm, so no extra flag is needed.
+    this.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+  }
+
+  /**
+   * Filter button hook — opens the filter bottom-sheet.
    */
   onFilter(): void {
     this.filterOpen.set(true);
@@ -204,7 +276,7 @@ export class Home implements AfterViewInit, OnDestroy {
     this.selectedActivities.update((cur) =>
       cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key],
     );
-    this.refresh();
+    this.applyCurrent();
   }
 
   /** Toggle a source in the selection (live). */
@@ -212,14 +284,14 @@ export class Home implements AfterViewInit, OnDestroy {
     this.selectedSources.update((cur) =>
       cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key],
     );
-    this.refresh();
+    this.applyCurrent();
   }
 
   /** Clear all filters. */
   resetFilters(): void {
     this.selectedActivities.set([]);
     this.selectedSources.set([]);
-    this.refresh();
+    this.applyCurrent();
   }
 
   /** Close the filter sheet; the current filter is already applied live. */
@@ -232,20 +304,35 @@ export class Home implements AfterViewInit, OnDestroy {
   onRangeInput(event: Event): void {
     const idx = Number((event.target as HTMLInputElement).value);
     this.rangeIndex.set(idx);
-    this.refresh();
+    this.applyCurrent();
   }
 
   /** Custom date-range slider: select a step by index (mobile). */
   selectRange(i: number): void {
     if (i < 0 || i >= this.steps.length) return;
     this.rangeIndex.set(i);
-    this.refresh();
+    this.applyCurrent();
   }
 
-  /** Debounced bbox search triggered on map move/zoom. */
+  /** Debounced bbox search triggered on map move/zoom. Suppressed while a
+      free-text search term is active (pan/zoom must not override the search). */
   private onViewportChanged(): void {
+    if (this.searchTerm().length > 0) return;
     if (this.moveDebounce) clearTimeout(this.moveDebounce);
     this.moveDebounce = setTimeout(() => this.refresh(), 300);
+  }
+
+  /**
+   * Re-run whichever search mode is currently active: free-text search when a
+   * term is set, otherwise a viewport (bbox) search. Used by filter/range
+   * changes so they apply in both modes.
+   */
+  private applyCurrent(): void {
+    if (this.searchTerm().length > 0) {
+      this.onSearchSubmit();
+    } else {
+      this.refresh();
+    }
   }
 
   /** Runs a bbox search for the current viewport + date range. */
@@ -325,7 +412,6 @@ export class Home implements AfterViewInit, OnDestroy {
     this.applySelectionHighlight(this.selectedId());
   }
 
-  /** Pin click -> select the report and move it to the top of the list. */
   /**
    * Centers the map on the user's current position and drops a location marker.
    * Uses the browser Geolocation API; no-op outside the browser.
@@ -365,26 +451,45 @@ export class Home implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Select a report (from a map pin click OR a list item). The selected report
-   * moves to the top of the list and its map marker gets a persistent highlight.
-   * Only ONE marker can be highlighted at a time.
+   * Selection from a MAP PIN click. Both layouts select the report and give its
+   * marker the persistent highlight (only one at a time). Additionally:
+   *   - Desktop: scroll the right-hand results panel to the selected card.
+   *   - Mobile:  the selected card moves to the top of the list (orderedResults).
    */
   selectReport(id: number): void {
     this.selectedId.set(id);
     this.applySelectionHighlight(id);
+    if (this.isDesktop()) {
+      this.scrollListToReport(id);
+    }
   }
 
   /**
-   * Selection coming from a LIST item: select as usual, then scroll the map
-   * into view so the highlighted pin is visible (the whole page scrolls on
-   * mobile, and the tapped list row may be far below the map).
+   * Selection from a LIST item. Selects + highlights the pin. Layout-specific:
+   *   - Mobile:  scroll the page up to the map so the highlighted pin is visible.
+   *   - Desktop: nothing extra — the item is simply shown as selected in place.
    */
   selectFromList(id: number): void {
-    this.selectReport(id);
+    this.selectedId.set(id);
+    this.applySelectionHighlight(id);
     if (!isPlatformBrowser(this.platformId)) return;
-    // Defer to the next frame so the list reorder/highlight has applied.
+    if (!this.isDesktop()) {
+      // Mobile: bring the map (with the highlighted pin) into view.
+      setTimeout(() => {
+        this.mapEl?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 0);
+    }
+  }
+
+  /**
+   * Desktop only: scroll the results panel so the selected card is visible.
+   */
+  private scrollListToReport(id: number): void {
+    if (!isPlatformBrowser(this.platformId)) return;
     setTimeout(() => {
-      this.mapEl?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const panel = this.resultsPanel?.nativeElement;
+      const card = panel?.querySelector<HTMLElement>(`[data-report-id="${id}"]`);
+      card?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 0);
   }
 

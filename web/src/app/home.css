@@ -193,8 +193,9 @@
    map keeps a sensible fixed height so it never collapses.
    =========================================================================== */
 .app--mobile {
-  max-width: 720px;
-  margin: 0 auto;
+  /* Full width at all mobile sizes (desktop takes over at >= 860px), so there
+     is no unused side margin near the breakpoint. */
+  width: 100%;
   display: flex;
   flex-direction: column;
   background: var(--mr-primary);
@@ -306,6 +307,35 @@
   width: auto;
   display: block;
 }
+/* Search icon is a button (click = submit). */
+.app--mobile .search__icon-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+/* Clear (X) button, shown only while a search term is applied. */
+.app--mobile .search__clear {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--mr-dark);
+  cursor: pointer;
+  opacity: 0.6;
+}
+.app--mobile .search__clear:hover {
+  opacity: 1;
+}
 .app--mobile .search__input {
   flex: 1 1 auto;
   min-width: 0;
@@ -320,6 +350,12 @@
 .app--mobile .search__input::placeholder {
   color: var(--mr-dark);
   opacity: 0.6;
+}
+/* Hide the browser's native type="search" clear (X); we use our own .search__clear
+   which also resets the applied search + re-runs a viewport search. */
+.app--mobile .search__input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
 }
 /* Separate round, icon-only filter button: light circle, dark icon (Figma).
    When filters are active, only the icon changes (its dots become filled). */
@@ -521,27 +557,231 @@
 }
 
 /* ===========================================================================
-   DESKTOP layout
-   Map full width on top, results list underneath; the page scrolls normally.
+   DESKTOP layout (matches the Figma "Mountainradar Desktop" frame)
+   A full-height column: header bar on top, then a two-column body (big map on
+   the left, scrollable results panel on the right), then a slim footer.
    =========================================================================== */
 .app--desktop {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 1.5rem 2rem 3rem;
-}
-.app--desktop .content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  height: 100vh;
+  overflow: hidden;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* --- Header bar --------------------------------------------------------- */
+.app--desktop .dheader {
+  position: relative;
+  z-index: 10; /* sit above the map so dropdown menus overflow on top of it */
+  flex: 0 0 auto;
+  padding: 0.5rem 2rem 1rem;
+  background: var(--mr-primary);
+  isolation: isolate;
+}
+/* The panorama background is clipped to the header, but the header itself must
+   NOT clip the dropdown menus that overflow below it. */
+.app--desktop .dheader__bg {
+  border-radius: inherit;
+}
+.app--desktop .dheader__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(11, 36, 66, 0.2), rgba(11, 36, 66, 0.55)),
+    url('/assets/search-bg.png') center / cover no-repeat;
+  opacity: 0.9;
+}
+.app--desktop .dheader__logo {
+  display: block;
+  height: 40px;
+  width: auto;
+  margin: 0.3rem 0 0.75rem;
+}
+.app--desktop .dheader__row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+}
+
+/* Search pill (desktop) */
+.app--desktop .dsearch {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 260px;
+  min-width: 220px;
+  height: 42px;
+  padding: 0 0.85rem;
+  background: var(--mr-light);
+  border-radius: 27px;
+}
+.app--desktop .dsearch__icon-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+.app--desktop .dsearch__icon { height: 18px; width: auto; display: block; }
+.app--desktop .dsearch__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-title);
+  font-size: 15px;
+  color: var(--mr-dark);
+}
+.app--desktop .dsearch__input::placeholder { color: var(--mr-dark); opacity: 0.6; }
+.app--desktop .dsearch__input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.app--desktop .dsearch__clear {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px; height: 24px;
+  padding: 0; border: none; background: none;
+  color: var(--mr-dark); cursor: pointer; opacity: 0.6;
+}
+.app--desktop .dsearch__clear:hover { opacity: 1; }
+
+/* Horizontal date-range slider (desktop) */
+.app--desktop .dslider {
+  flex: 1 1 320px;
+  min-width: 280px;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem; /* small label -> track gap */
+  padding: 0 1.4rem; /* breathing room so end labels center over end dots */
+}
+.app--desktop .dslider__labels {
+  position: relative;
+  height: 20px;
+}
+.app--desktop .dslider__label {
+  position: absolute;
+  transform: translateX(-50%);
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--mr-light);
+}
+.app--desktop .dslider__label--active {
+  font-weight: 800;
+  color: var(--mr-highlight);
+}
+.app--desktop .dslider__track {
+  position: relative;
+  height: 18px;
+  margin: 0;
+}
+.app--desktop .dslider__track::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 4px;
+  transform: translateY(-50%);
+  background: var(--mr-light);
+  border-radius: 4px;
+}
+.app--desktop .dslider__fill {
+  position: absolute;
+  left: 0; top: 50%;
+  height: 4px;
+  transform: translateY(-50%);
+  background: var(--mr-highlight);
+  border-radius: 4px;
+}
+.app--desktop .dslider__dot {
+  position: absolute;
+  top: 50%;
+  width: 12px; height: 12px;
+  margin: -6px 0 0 -6px;
+  padding: 0; border: none;
+  border-radius: 50%;
+  background: var(--mr-light);
+  cursor: pointer;
+}
+.app--desktop .dslider__dot--filled { background: var(--mr-highlight); }
+.app--desktop .dslider__dot--active {
+  width: 18px; height: 18px;
+  margin: -9px 0 0 -9px;
+  background: var(--mr-highlight);
+  border: 3px solid #fff;
+}
+
+/* --- Body: map (left) + results panel (right) --------------------------- */
+.app--desktop .content {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 540px;
+  gap: 0;
 }
 .app--desktop .map-wrap {
-  width: 100%;
-  height: 60vh;
-  min-height: 380px;
+  position: relative;
+  height: 100%;
+  min-height: 0;
 }
-/* Results list as a responsive grid under the full-width map. */
-.app--desktop .results ::ng-deep .results__list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 0.75rem;
+.app--desktop .map {
+  height: 100%;
+  border-radius: 0;
+  border: none;
 }
+.app--desktop .results {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1.25rem;
+  overflow-y: auto;
+  background: #fff;
+}
+.app--desktop .results__count {
+  margin: 0 0 0.75rem;
+}
+
+/* --- Slim footer -------------------------------------------------------- */
+.app--desktop .dfooter {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0.85rem 2rem;
+  background: var(--mr-dark);
+  color: var(--mr-light);
+}
+.app--desktop .dfooter__attribution {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 300;
+}
+.app--desktop .dfooter__attribution strong { font-weight: 600; }
+.app--desktop .dfooter__attribution a { color: var(--mr-light); font-weight: 600; text-decoration: underline; }
+.app--desktop .dfooter__links {
+  display: flex;
+  gap: 1.75rem;
+  flex: 0 0 auto;
+}
+.app--desktop .dfooter__links a {
+  font-family: var(--font-title);
+  font-size: 13px;
+  color: var(--mr-light);
+  text-decoration: none;
+  opacity: 0.95;
+}
+.app--desktop .dfooter__links a:hover { opacity: 1; text-decoration: underline; }

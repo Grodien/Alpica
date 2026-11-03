@@ -77,6 +77,16 @@ app.get('/api/bbox', (req, res) =>
   ),
 );
 
+// Free-text search across all reports (not viewport-bound).
+app.get('/api/search', (req, res) =>
+  proxyToApi(
+    '/reports/search',
+    ['q', 'from', 'to', 'limit', 'categories', 'sources'],
+    req,
+    res,
+  ),
+);
+
 /**
  * Serve static files from /browser
  */

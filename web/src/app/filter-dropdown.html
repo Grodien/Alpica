@@ -1,0 +1,43 @@
+<div class="dd" [class.dd--open]="open()">
+  <button
+    type="button"
+    class="dd__button"
+    [class.dd__button--active]="selected().length > 0"
+    (click)="toggleOpen()"
+    [attr.aria-expanded]="open()"
+  >
+    <span class="dd__label">{{ label() }}</span>
+    <svg class="dd__chevron" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+      <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+    </svg>
+  </button>
+
+  @if (open()) {
+    <div class="dd__menu" role="listbox" aria-multiselectable="true">
+      @for (opt of options(); track opt.key) {
+        <button
+          type="button"
+          class="dd__option"
+          role="option"
+          [attr.aria-selected]="isSelected(opt.key)"
+          (click)="onToggle(opt.key)"
+        >
+          <span class="dd__check" [class.dd__check--on]="isSelected(opt.key)" aria-hidden="true">
+            @if (isSelected(opt.key)) {
+              <svg viewBox="0 0 16 16" width="12" height="12"><path d="M3 8l3.5 3.5L13 4" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            }
+          </span>
+          @if (opt.icon) {
+            <img
+              class="dd__icon"
+              [src]="opt.icon"
+              alt=""
+              aria-hidden="true"
+            />
+          }
+          <span class="dd__option-label">{{ opt.label }}</span>
+        </button>
+      }
+    </div>
+  }
+</div>

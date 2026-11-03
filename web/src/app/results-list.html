@@ -2,6 +2,7 @@
   @for (report of reports(); track trackById($index, report)) {
     <li
       class="result"
+      [attr.data-report-id]="report.id"
       [class.result--selected]="selectedId() === report.id"
       (click)="select.emit(report.id)"
       (mouseenter)="hover.emit(report.id)"
