@@ -77,7 +77,7 @@ async function getWatermark(pool, source) {
   return d;
 }
 
-async function upsertRaw(pool, source, sourceId, item) {
+export async function upsertRaw(pool, source, sourceId, item) {
   await pool.query(
     `INSERT INTO raw_reports (source, source_id, payload)
      VALUES (?, ?, CAST(? AS JSON))
@@ -86,7 +86,7 @@ async function upsertRaw(pool, source, sourceId, item) {
   );
 }
 
-async function upsertNormalized(pool, r) {
+export async function upsertNormalized(pool, r) {
   // Derive the single normalized category from the raw activity token list.
   const row = { description: null, ...r, category: categorize(r.activity) };
   await pool.query(
