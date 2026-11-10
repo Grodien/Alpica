@@ -191,4 +191,11 @@ export const powderguideAdapter = {
   rawId: (item) => item.uuid,
   itemDate: (item) => itemUpdatedAt(item),
   normalize: (item, spotMap) => normalize(item, spotMap),
+  // The server-side `newer_than` filter and the watermark run on `updated_at`,
+  // which is DECOUPLED from the report's activity date (reports are often bulk
+  // re-saved, so many share one recent updated_at). A historical backfill must
+  // therefore NOT window this source by month via `newer_than` — it would drop
+  // most reports. The backfill fetches powderguide in a single forward pass and
+  // buckets kept items by their activity date instead. See backfill-2026.js.
+  backfillFetchBy: 'updatedAt',
 };

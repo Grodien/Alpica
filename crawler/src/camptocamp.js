@@ -131,10 +131,13 @@ async function getJson(path, params = {}, { retries = 4 } = {}) {
  *
  * @param {Date|null} since
  */
-export async function* iterateOutings(since) {
+export async function* iterateOutings(since, until) {
   const pageSize = Math.min(Number(optionalEnv('CRAWLER_PAGE_SIZE', '100')), 100);
   const maxItems = Number(optionalEnv('CAMPTOCAMP_MAX_ITEMS', '2000'));
   const sinceTime = since instanceof Date && !Number.isNaN(since.valueOf()) ? since.getTime() : null;
+  // Optional upper bound (backfill only): items newer than `until` precede the
+  // window when paging newest-first, so they're skipped. Normal crawl: no bound.
+  const untilTime = until instanceof Date && !Number.isNaN(until.valueOf()) ? until.getTime() : null;
 
   let offset = 0;
   let yielded = 0;
@@ -149,6 +152,11 @@ export async function* iterateOutings(since) {
       const itemTime = parseDate(doc?.date_end || doc?.date_start);
       if (sinceTime !== null && itemTime !== null && itemTime <= sinceTime) {
         return;
+      }
+      // Skip items newer than the upper bound (they precede the window when
+      // paging newest-first); don't count them against maxItems.
+      if (untilTime !== null && itemTime !== null && itemTime > untilTime) {
+        continue;
       }
       yield doc;
       yielded += 1;
@@ -363,8 +371,8 @@ export function itemDate(doc) {
  * (when enabled). Doing it here keeps the runner's normalize() synchronous while
  * still storing the resolved thumbnail in both raw + normalized rows.
  */
-async function* iterateEnriched(since) {
-  for await (const doc of iterateOutings(since)) {
+async function* iterateEnriched(since, until) {
+  for await (const doc of iterateOutings(since, until)) {
     await enrichDetail(doc);
     yield doc;
   }
@@ -375,7 +383,8 @@ async function* iterateEnriched(since) {
  */
 export const camptocampAdapter = {
   source: SOURCE,
-  iterate: (since) => iterateEnriched(since),
+  // `until` (optional) bounds the upper end for the backfill's monthly windows.
+  iterate: (since, until) => iterateEnriched(since, until),
   rawId: (doc) => String(doc.document_id),
   itemDate: (doc) => itemDate(doc),
   normalize: (doc) => normalize(doc),

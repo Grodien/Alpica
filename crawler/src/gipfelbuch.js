@@ -83,10 +83,13 @@ function toYmd(date) {
  *
  * @param {Date|null} since
  */
-export async function* iterateConditions(since) {
+export async function* iterateConditions(since, until) {
   const limit = Number(optionalEnv('GIPFELBUCH_LIMIT', '2000'));
   const dateFrom = since instanceof Date && !Number.isNaN(since.valueOf()) ? toYmd(since) : undefined;
-  const dateTo = toYmd(new Date());
+  // Upper bound: callers (e.g. the backfill) can pass `until` to bound the
+  // window so the no-pagination + hard `limit` cap doesn't truncate it. The
+  // normal incremental crawl passes no `until` -> up to "now".
+  const dateTo = until instanceof Date && !Number.isNaN(until.valueOf()) ? toYmd(until) : toYmd(new Date());
 
   const data = await getJson('/api/v2/conditions', {
     limit,
@@ -159,7 +162,10 @@ export function itemDate(cond) {
  */
 export const gipfelbuchAdapter = {
   source: SOURCE,
-  iterate: (since) => iterateConditions(since),
+  // `until` is optional and only used by the backfill to bound each month
+  // window (the server has no pagination and a hard `limit`, so an unbounded
+  // date_to would truncate long ranges). The normal crawl passes only `since`.
+  iterate: (since, until) => iterateConditions(since, until),
   rawId: (cond) => String(cond.id ?? cond.uuid),
   itemDate: (cond) => itemDate(cond),
   normalize: (cond) => normalize(cond),

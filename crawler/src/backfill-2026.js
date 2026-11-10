@@ -122,16 +122,45 @@ function monthLabel(d) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/**
- * Backfills a single source across the given month windows. Returns the number
- * of items upserted. Does NOT touch crawler_state.
- */
-async function backfillSource(pool, adapter, windows, { monthDelayMs }) {
-  const { source } = adapter;
-  // Some adapters need setup (e.g. powderguide's spot-location map) that the
-  // runner normally provides via init(); replicate that here.
-  const context = adapter.init ? await adapter.init() : undefined;
+/** Timestamped log line, e.g. "[14:03:21] ...". */
+function log(...args) {
+  const ts = new Date().toISOString().slice(11, 19); // HH:MM:SS (UTC)
+  console.log(`[${ts}]`, ...args);
+}
 
+/** Human-friendly elapsed time, e.g. "4.2s" or "1m 05s". */
+function fmtDuration(ms) {
+  const s = ms / 1000;
+  if (s < 60) return `${s.toFixed(1)}s`;
+  const m = Math.floor(s / 60);
+  const rem = Math.round(s % 60);
+  return `${m}m ${String(rem).padStart(2, '0')}s`;
+}
+
+/** How often (in items seen) to emit an in-progress tick during iteration. */
+const PROGRESS_EVERY = 25;
+
+/**
+ * Parses a normalized `report_date` ("YYYY-MM-DD hh:mm:ss", UTC) or an ISO
+ * string into epoch ms, or NaN if absent/invalid.
+ */
+function reportDateMs(normalized) {
+  const v = normalized?.report_date;
+  if (!v) return NaN;
+  // The normalized value is a MySQL UTC datetime "YYYY-MM-DD hh:mm:ss".
+  const iso = /^\d{4}-\d{2}-\d{2} /.test(v) ? v.replace(' ', 'T') + 'Z' : v;
+  return new Date(iso).getTime();
+}
+
+/**
+ * Backfills a source whose FETCH dimension matches the activity date
+ * (camptocamp, skitour, gipfelbuch). We fetch one month window at a time
+ * (iterate(windowStart)) so each request window is small and the per-source
+ * caps aren't hit, and we keep only items whose activity date
+ * (normalized report_date) falls inside the window.
+ */
+async function backfillByMonth(pool, adapter, windows, context, { monthDelayMs }) {
+  const { source } = adapter;
   let total = 0;
   const lastIdx = windows.length - 1;
 
@@ -140,34 +169,141 @@ async function backfillSource(pool, adapter, windows, { monthDelayMs }) {
     const isLast = i === lastIdx;
     const startMs = win.start.getTime();
     const endMs = win.end.getTime();
+    const month = monthLabel(win.start);
+    const monthStarted = Date.now();
+    let seen = 0;
     let processed = 0;
 
-    for await (const item of adapter.iterate(win.start)) {
-      const iso = adapter.itemDate(item);
-      const t = iso ? new Date(iso).getTime() : NaN;
+    log(
+      `[${source}] ${month} (${i + 1}/${windows.length}): fetching ` +
+      `${win.start.toISOString().slice(0, 10)} … ${win.end.toISOString().slice(0, 10)} …`
+    );
+
+    // Pass the window end as an upper bound so sources with a hard result cap
+    // and no pagination (gipfelbuch) or newest-first paging (skitour,
+    // camptocamp) don't truncate a long range — each request covers one month.
+    for await (const item of adapter.iterate(win.start, win.end)) {
+      seen += 1;
+      const normalized = adapter.normalize(item, context);
+      const t = reportDateMs(normalized);
 
       if (Number.isFinite(t)) {
-        // Keep only items that fall inside this window. Newer items belong to a
-        // later window; older-than-start items (some sources overshoot) are
-        // skipped here and covered by their own earlier window.
-        if (t < startMs || t >= endMs) continue;
-      } else {
-        // Undated items can't be placed in a month; attribute them to the final
-        // window only, so each is written exactly once (not per month).
-        if (!isLast) continue;
+        // Keep only items whose activity date is inside this month window.
+        if (t < startMs || t >= endMs) {
+          if (seen % PROGRESS_EVERY === 0) {
+            log(`[${source}] ${month}:   …seen ${seen}, kept ${processed} so far`);
+          }
+          continue;
+        }
+      } else if (!isLast) {
+        // Undated items: write once, in the final window only.
+        continue;
       }
 
       await upsertRaw(pool, source, adapter.rawId(item), item);
-      await upsertNormalized(pool, adapter.normalize(item, context));
+      await upsertNormalized(pool, normalized);
       processed += 1;
       total += 1;
+
+      if (seen % PROGRESS_EVERY === 0) {
+        log(`[${source}] ${month}:   …seen ${seen}, kept ${processed} so far`);
+      }
     }
 
-    console.log(`[${source}] ${monthLabel(win.start)}: upserted ${processed} report(s).`);
-    if (monthDelayMs > 0 && !isLast) await sleep(monthDelayMs);
+    log(
+      `[${source}] ${month} done: seen ${seen}, upserted ${processed} report(s) ` +
+      `in ${fmtDuration(Date.now() - monthStarted)} (running total ${total}).`
+    );
+    if (monthDelayMs > 0 && !isLast) {
+      log(`[${source}] pausing ${monthDelayMs}ms before next month …`);
+      await sleep(monthDelayMs);
+    }
   }
 
   return total;
+}
+
+/**
+ * Backfills a source whose FETCH dimension is decoupled from the activity date
+ * (powderguide: server-side `newer_than` runs on `updated_at`, which is often a
+ * single recent bulk-update timestamp). Monthly `newer_than` windowing would
+ * drop almost everything, so we do ONE forward pass from the overall start and
+ * keep every item whose activity date falls in the overall [start, end) range.
+ * This source paginates with no item cap, so a single pass is safe.
+ */
+async function backfillSinglePass(pool, adapter, start, end, context) {
+  const { source } = adapter;
+  const startMs = start.getTime();
+  const endMs = end.getTime();
+  const passStarted = Date.now();
+  // Per-month tallies purely for logging parity with the monthly path.
+  const perMonth = new Map();
+  let seen = 0;
+  let total = 0;
+  let outside = 0;
+  let undated = 0;
+
+  log(`[${source}] single forward pass from ${start.toISOString()} (paging all; may take a while) …`);
+
+  for await (const item of adapter.iterate(start)) {
+    seen += 1;
+    const normalized = adapter.normalize(item, context);
+    const t = reportDateMs(normalized);
+
+    if (Number.isFinite(t)) {
+      if (t < startMs || t >= endMs) {
+        outside += 1;
+        if (seen % PROGRESS_EVERY === 0) {
+          log(`[${source}]   …seen ${seen}, kept ${total}, outside-range ${outside}`);
+        }
+        continue; // outside the backfill range
+      }
+      const key = monthLabel(new Date(t));
+      perMonth.set(key, (perMonth.get(key) ?? 0) + 1);
+    } else {
+      undated += 1;
+    }
+
+    await upsertRaw(pool, source, adapter.rawId(item), item);
+    await upsertNormalized(pool, normalized);
+    total += 1;
+
+    if (seen % PROGRESS_EVERY === 0) {
+      log(`[${source}]   …seen ${seen}, kept ${total}, outside-range ${outside}`);
+    }
+  }
+
+  log(
+    `[${source}] pass done: seen ${seen}, upserted ${total} report(s), ` +
+    `skipped ${outside} outside range, in ${fmtDuration(Date.now() - passStarted)}.`
+  );
+  // Per-month breakdown so you can sanity-check the distribution.
+  for (const [month, count] of [...perMonth.entries()].sort()) {
+    log(`[${source}]   ${month}: ${count} report(s)`);
+  }
+  if (undated) log(`[${source}]   (no activity date): ${undated} report(s)`);
+  return total;
+}
+
+/**
+ * Backfills a single source across the given month windows. Returns the number
+ * of items upserted. Does NOT touch crawler_state.
+ */
+async function backfillSource(pool, adapter, windows, start, end, opts) {
+  // Some adapters need setup (e.g. powderguide's spot-location map) that the
+  // runner normally provides via init(); replicate that here.
+  let context;
+  if (adapter.init) {
+    log(`[${adapter.source}] initializing (loading source metadata) …`);
+    context = await adapter.init();
+    log(`[${adapter.source}] init complete.`);
+  }
+
+  if (adapter.backfillFetchBy === 'updatedAt') {
+    // Fetch dimension is decoupled from activity date -> single forward pass.
+    return backfillSinglePass(pool, adapter, start, end, context);
+  }
+  return backfillByMonth(pool, adapter, windows, context, opts);
 }
 
 function parseArgs(argv) {
@@ -205,6 +341,7 @@ async function main() {
   console.log(`batches  : ${windows.length} month(s) [${windows.map((w) => monthLabel(w.start)).join(', ')}]`);
   console.log(`sources  : ${names.join(', ')}`);
   console.log(`month gap: ${monthDelayMs} ms`);
+  console.log(`progress : a tick every ${PROGRESS_EVERY} items seen`);
 
   if (!confirm || dryRun) {
     console.log('');
@@ -219,18 +356,35 @@ async function main() {
 
   const pool = getPool();
   let hadError = false;
+  const runStarted = Date.now();
+  const summary = [];
 
   // Run sources sequentially so one failure doesn't abort the rest.
-  for (const name of names) {
+  for (let s = 0; s < names.length; s++) {
+    const name = names[s];
+    const mode = ADAPTERS[name].backfillFetchBy === 'updatedAt' ? 'single pass' : `${windows.length} monthly batches`;
+    const srcStarted = Date.now();
+    log(`\n=== source ${s + 1}/${names.length}: ${name} (${mode}) ===`);
     try {
-      console.log(`\n[${name}] backfilling ${windows.length} month(s)...`);
-      const total = await backfillSource(pool, ADAPTERS[name], windows, { monthDelayMs });
-      console.log(`[${name}] backfill done. total upserted: ${total} report(s).`);
+      const total = await backfillSource(pool, ADAPTERS[name], windows, start, end, { monthDelayMs });
+      const took = fmtDuration(Date.now() - srcStarted);
+      log(`[${name}] ✓ done — ${total} report(s) upserted in ${took}.`);
+      summary.push({ name, total, took, ok: true });
     } catch (err) {
       hadError = true;
-      console.error(`[${name}] backfill failed:`, err.message || err);
+      const took = fmtDuration(Date.now() - srcStarted);
+      log(`[${name}] ✗ FAILED after ${took}: ${err.message || err}`);
+      summary.push({ name, total: 0, took, ok: false });
     }
   }
+
+  // Final summary table.
+  console.log('\n=== backfill summary ===');
+  for (const r of summary) {
+    console.log(`  ${r.ok ? '✓' : '✗'} ${r.name.padEnd(12)} ${String(r.total).padStart(6)} report(s)  (${r.took})`);
+  }
+  const grand = summary.reduce((n, r) => n + r.total, 0);
+  console.log(`  total upserted: ${grand} report(s) in ${fmtDuration(Date.now() - runStarted)}`);
 
   if (hadError) {
     throw new Error('One or more backfills failed');

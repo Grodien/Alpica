@@ -91,10 +91,14 @@ async function getJson(path, params = {}, { retries = 4 } = {}) {
  *
  * @param {Date|null} since
  */
-export async function* iterateSorties(since) {
+export async function* iterateSorties(since, until) {
   const pageSize = Math.min(Number(optionalEnv('CRAWLER_PAGE_SIZE', '100')), 1000);
   const maxItems = Number(optionalEnv('SKITOUR_MAX_ITEMS', '2000'));
   const sinceTime = since instanceof Date && !Number.isNaN(since.valueOf()) ? since.getTime() : null;
+  // Optional upper bound (backfill only): items newer than `until` are skipped.
+  // Since we page newest-first, these simply precede the window and are passed
+  // over until we reach it. The normal crawl passes no `until`.
+  const untilTime = until instanceof Date && !Number.isNaN(until.valueOf()) ? until.getTime() : null;
 
   // On an initial/bounded run, ask the server for a recent window to avoid
   // paging through the whole history.
@@ -116,6 +120,11 @@ export async function* iterateSorties(since) {
       const itemTime = parseTimestamp(item?.date);
       if (sinceTime !== null && itemTime !== null && itemTime <= sinceTime) {
         return;
+      }
+      // Skip items newer than the upper bound (they precede the window when
+      // paging newest-first); don't count them against maxItems.
+      if (untilTime !== null && itemTime !== null && itemTime > untilTime) {
+        continue;
       }
       yield item;
       yielded += 1;
@@ -238,7 +247,8 @@ export function itemDate(item) {
  */
 export const skitourAdapter = {
   source: SOURCE,
-  iterate: (since) => iterateSorties(since),
+  // `until` (optional) bounds the upper end for the backfill's monthly windows.
+  iterate: (since, until) => iterateSorties(since, until),
   rawId: (item) => String(item.id),
   itemDate: (item) => itemDate(item),
   normalize: (item) => normalize(item),
