@@ -135,27 +135,49 @@ export async function* iterateOutings(since, until) {
   const pageSize = Math.min(Number(optionalEnv('CRAWLER_PAGE_SIZE', '100')), 100);
   const maxItems = Number(optionalEnv('CAMPTOCAMP_MAX_ITEMS', '2000'));
   const sinceTime = since instanceof Date && !Number.isNaN(since.valueOf()) ? since.getTime() : null;
-  // Optional upper bound (backfill only): items newer than `until` precede the
-  // window when paging newest-first, so they're skipped. Normal crawl: no bound.
-  const untilTime = until instanceof Date && !Number.isNaN(until.valueOf()) ? until.getTime() : null;
+  const untilValid = until instanceof Date && !Number.isNaN(until.valueOf());
+  const untilTime = untilValid ? until.getTime() : null;
+
+  // When BOTH bounds are given (backfill), use C2C's server-side `date=from,to`
+  // range filter so we only fetch that window. This is essential: the API
+  // hard-caps `offset + limit <= 10000`, so paging newest-first from offset 0
+  // down to an old month would 400 (there are hundreds of thousands of outings
+  // newer than the window). The filter also makes it far faster — a month is
+  // ~1-2k outings instead of everything-since-now. The `date` filter matches on
+  // OVERLAP (multi-day outings spanning the window are included), so the caller
+  // still assigns each outing to its month by the normalized report_date.
+  const useDateFilter = sinceTime !== null && untilValid;
+  let dateParam;
+  if (useDateFilter) {
+    // `until` is the EXCLUSIVE start of the next window; the API bound is
+    // inclusive, so use the day before (until - 1 day).
+    const toInclusive = new Date(until.getTime() - 86_400_000);
+    dateParam = `${toYmd(since)},${toYmd(toInclusive)}`;
+  }
 
   let offset = 0;
   let yielded = 0;
 
   while (yielded < maxItems) {
-    const data = await getJson('/outings', { limit: pageSize, offset });
+    const params = { limit: pageSize, offset };
+    if (dateParam) params.date = dateParam;
+    const data = await getJson('/outings', params);
     const docs = data?.documents ?? [];
     if (docs.length === 0) break;
 
     for (const doc of docs) {
-      // Stop once we reach items at or before the watermark (newest-first order).
       const itemTime = parseDate(doc?.date_end || doc?.date_start);
-      if (sinceTime !== null && itemTime !== null && itemTime <= sinceTime) {
+      // Without a server-side window (normal incremental crawl) we page
+      // newest-first and stop at the watermark.
+      if (!useDateFilter && sinceTime !== null && itemTime !== null && itemTime <= sinceTime) {
         return;
       }
-      // Skip items newer than the upper bound (they precede the window when
-      // paging newest-first); don't count them against maxItems.
+      // Skip items outside the window (overlap matches can fall just outside);
+      // don't count them against maxItems.
       if (untilTime !== null && itemTime !== null && itemTime > untilTime) {
+        continue;
+      }
+      if (useDateFilter && sinceTime !== null && itemTime !== null && itemTime < sinceTime) {
         continue;
       }
       yield doc;
@@ -209,6 +231,16 @@ function firstImageFilename(detail) {
  * A short pause is applied to be gentle on the flaky C2C API.
  */
 async function enrichDetail(doc) {
+  // The per-outing detail request is the single biggest cost of a C2C crawl
+  // (one HTTP round-trip + a politeness delay per outing). For a large
+  // historical backfill you can disable it with CAMPTOCAMP_FETCH_DETAIL=false
+  // to trade the long-form description + thumbnail for a MUCH faster run; the
+  // list item still carries title, date, place, coords, and a short summary.
+  if (!detailEnabled()) {
+    doc._description = pickLocaleSummary(doc?.locales);
+    return;
+  }
+
   // One detail request per outing provides BOTH the full-text description and
   // (when present) the first image filename for a thumbnail.
   const detail = await fetchOutingDetail(doc.document_id);
@@ -219,8 +251,14 @@ async function enrichDetail(doc) {
       if (filename) doc._thumbnail = buildThumbnailUrl(filename, thumbnailSize());
     }
   }
+  // Only pause after an actual request (skipped entirely when detail is off).
   const delayMs = Number(optionalEnv('CAMPTOCAMP_DETAIL_DELAY_MS', '250'));
   if (delayMs > 0) await sleep(delayMs);
+}
+
+/** Whether to fetch per-outing detail (description + thumbnail). */
+function detailEnabled() {
+  return optionalEnv('CAMPTOCAMP_FETCH_DETAIL', 'true') !== 'false';
 }
 
 function thumbnailsEnabled() {
@@ -352,6 +390,11 @@ export function normalize(doc) {
     activity: activities,
     url: outingUrl(doc.document_id),
   };
+}
+
+/** Formats a Date as a UTC "YYYY-MM-DD" string for the C2C `date` filter. */
+function toYmd(d) {
+  return d.toISOString().slice(0, 10);
 }
 
 /** C2C dates are date-only; turn into an ISO datetime at UTC midnight. */

@@ -42,6 +42,9 @@
  *   node crawler/src/backfill-2026.js --confirm gipfelbuch      # one source
  *   node crawler/src/backfill-2026.js --confirm skitour powderguide
  *
+ *   # load exactly ONE month (handy for rate-limited sources like skitour):
+ *   BACKFILL_MONTH=2026-02 node crawler/src/backfill-2026.js --confirm skitour
+ *
  *   # custom window (ISO dates / bare YYYY-MM-DD, interpreted as UTC):
  *   BACKFILL_START=2026-01-01 BACKFILL_END=2026-09-13 \
  *     node crawler/src/backfill-2026.js --confirm
@@ -51,6 +54,10 @@
  *
  *   # preview the plan without touching the DB or hitting any API:
  *   node crawler/src/backfill-2026.js --dry-run
+ *
+ * Rate limits: skitour.fr caps at 60 requests/minute (and 1000/24h). The
+ * skitour adapter throttles itself (~54/min by default) and retries on an
+ * overflow error; tune with SKITOUR_MIN_REQUEST_INTERVAL_MS if needed.
  *
  * The --confirm flag is REQUIRED for a real run (this writes to prod). Without
  * --confirm (or with --dry-run) the script only prints the plan and exits.
@@ -84,14 +91,33 @@ function parseDate(raw, label) {
   return d;
 }
 
-function resolveStart() {
-  const raw = (process.env.BACKFILL_START || '').trim();
-  return raw ? parseDate(raw, 'BACKFILL_START') : new Date(DEFAULT_START_ISO);
-}
+/**
+ * Resolves the backfill window [start, end).
+ *
+ * Priority:
+ *   1. BACKFILL_MONTH=YYYY-MM — a convenient shortcut to load exactly ONE
+ *      calendar month (start = 1st 00:00 UTC, end = 1st of the next month).
+ *   2. BACKFILL_START / BACKFILL_END — explicit bounds (YYYY-MM-DD or ISO).
+ *   3. Defaults — start 2026-01-01, end "now".
+ */
+function resolveWindow() {
+  const month = (process.env.BACKFILL_MONTH || '').trim();
+  if (month) {
+    const m = /^(\d{4})-(\d{2})$/.exec(month);
+    if (!m) throw new Error(`Invalid BACKFILL_MONTH: "${month}" (use YYYY-MM, e.g. 2026-02)`);
+    const year = Number(m[1]);
+    const mon = Number(m[2]); // 1-12
+    if (mon < 1 || mon > 12) throw new Error(`Invalid BACKFILL_MONTH month: "${month}"`);
+    const start = new Date(Date.UTC(year, mon - 1, 1, 0, 0, 0));
+    const end = new Date(Date.UTC(year, mon, 1, 0, 0, 0)); // 1st of next month
+    return { start, end };
+  }
 
-function resolveEnd() {
-  const raw = (process.env.BACKFILL_END || '').trim();
-  return raw ? parseDate(raw, 'BACKFILL_END') : new Date();
+  const startRaw = (process.env.BACKFILL_START || '').trim();
+  const endRaw = (process.env.BACKFILL_END || '').trim();
+  const start = startRaw ? parseDate(startRaw, 'BACKFILL_START') : new Date(DEFAULT_START_ISO);
+  const end = endRaw ? parseDate(endRaw, 'BACKFILL_END') : new Date();
+  return { start, end };
 }
 
 /**
@@ -328,8 +354,7 @@ async function main() {
     );
   }
 
-  const start = resolveStart();
-  const end = resolveEnd();
+  const { start, end } = resolveWindow();
   if (end <= start) {
     throw new Error(`BACKFILL_END (${end.toISOString()}) must be after BACKFILL_START (${start.toISOString()})`);
   }

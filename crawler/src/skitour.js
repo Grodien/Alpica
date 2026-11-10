@@ -37,7 +37,33 @@ function webBaseUrl() {
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * GET JSON with the `cle` auth header, retry + backoff. Returns the parsed body.
+ * Client-side throttle to respect skitour's 60 requests/minute cap.
+ *
+ * We enforce a minimum gap between the START of consecutive requests. The
+ * default 1100ms yields ~54 req/min, safely under 60. Override with
+ * SKITOUR_MIN_REQUEST_INTERVAL_MS (e.g. a bigger value to also stay comfortably
+ * under the 1000/24h cap on a large backfill). Requests are serialized through
+ * a shared promise chain so parallel callers still get spaced out.
+ */
+const SKITOUR_MIN_INTERVAL_MS = Number(
+  optionalEnv('SKITOUR_MIN_REQUEST_INTERVAL_MS', '1100')
+);
+let throttleChain = Promise.resolve();
+let lastRequestAt = 0;
+
+/** Resolves once it's safe (rate-limit-wise) to start the next request. */
+function throttle() {
+  throttleChain = throttleChain.then(async () => {
+    const wait = lastRequestAt + SKITOUR_MIN_INTERVAL_MS - Date.now();
+    if (wait > 0) await sleep(wait);
+    lastRequestAt = Date.now();
+  });
+  return throttleChain;
+}
+
+/**
+ * GET JSON with the `cle` auth header, client-side throttling, and retry +
+ * backoff. Returns the parsed body.
  */
 async function getJson(path, params = {}, { retries = 4 } = {}) {
   const url = new URL(baseUrl() + path);
@@ -51,6 +77,8 @@ async function getJson(path, params = {}, { retries = 4 } = {}) {
   let lastError;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     if (attempt > 0) await sleep(Math.min(1000 * 2 ** (attempt - 1), 8000));
+    // Space out request starts to stay under the 60/min cap.
+    await throttle();
     try {
       const res = await fetch(url, {
         headers: {
@@ -75,6 +103,17 @@ async function getJson(path, params = {}, { retries = 4 } = {}) {
         continue;
       }
       if (data && !Array.isArray(data) && data.ERROR) {
+        // The API signals rate-limit overflow in the body (e.g. "OVERFLOW 60
+        // REQUEST/MINUTE"). Treat that as retryable: wait a full minute (the
+        // per-minute window) and try again rather than failing the crawl.
+        if (/OVERFLOW|60 REQUEST|RATE/i.test(String(data.ERROR))) {
+          lastError = new Error(`Skitour rate limit: ${data.ERROR}`);
+          console.warn(`[skitour] rate limited (${data.ERROR}); waiting 60s before retry…`);
+          await sleep(60_000);
+          // Reset the throttle clock so the next request starts fresh.
+          lastRequestAt = 0;
+          continue;
+        }
         throw new Error(`Skitour API error: ${data.ERROR}`);
       }
       return data;
