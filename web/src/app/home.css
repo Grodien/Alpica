@@ -512,7 +512,10 @@
 */
 .app--mobile .footer__illustration {
   display: block;
-  margin: 0 -1.25rem -1px; /* full bleed; -1px kills any seam to the block */
+  /* Full bleed. -1px top pulls the (white-backed) illustration over the
+     footer's top edge so no navy sliver shows above it; -1px bottom kills the
+     seam to the navy block below. */
+  margin: -1px -1.25rem -1px;
   width: calc(100% + 2.5rem);
   height: auto;
 }
