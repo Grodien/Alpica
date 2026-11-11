@@ -6,6 +6,20 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- Consent Management Platform (consentmanager). Loaded FIRST so its
+       auto-blocking can gate the Google tag below until consent is given. -->
+  <script type="text/javascript" data-cmp-ab="1" src="https://cdn.consentmanager.net/delivery/autoblocking/e5d836cd423f9.js" data-cmp-host="a.delivery.consentmanager.net" data-cmp-cdn="cdn.consentmanager.net" data-cmp-codesrc="0"></script>
+
+  <!-- Google tag (gtag.js) — IP anonymized. The CMP above auto-blocks this
+       until the user consents to analytics. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JGYEW4YW2J"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-JGYEW4YW2J', {'anonymize_ip': true});
+  </script>
+
   <!-- Primary SEO -->
   <meta name="description" content="Mountain-Radar bündelt aktuelle Verhältnisberichte für Skitouren, Hochtouren, Freeride und Wanderungen aus den Alpen auf einer interaktiven Karte. One Search. All Conditions.">
   <link rel="canonical" href="https://www.mountain-radar.com/">
