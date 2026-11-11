@@ -168,6 +168,9 @@ export class Home implements AfterViewInit, OnDestroy {
       this.map = leaflet.map(this.mapEl.nativeElement, {
         center: DEFAULT_CENTER,
         zoom: DEFAULT_ZOOM,
+        // Furthest zoom-out: at the Alps latitude, zoom 3 makes the metric
+        // scale bar read 1000 km. Don't allow zooming out past that.
+        minZoom: 3,
         // Zoom buttons are hidden on mobile (pinch-to-zoom is used there).
         zoomControl: this.isDesktop(),
         // Hide the "Leaflet" attribution badge in the corner.
