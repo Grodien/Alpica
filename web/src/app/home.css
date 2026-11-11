@@ -269,8 +269,14 @@
    stay pinned while the results list scrolls underneath. */
 .app--mobile .search {
   position: sticky;
-  top: 58px;
+  /* Overlap the header by 1px so no sub-pixel seam (a thin lighter line from
+     the translucent search background) shows between the two sticky blocks. */
+  top: 57px;
   z-index: 999;
+  /* Solid brand-blue base behind the translucent photo overlay (.search__bg),
+     so the top edge matches the header color exactly instead of revealing the
+     lighter gradient top as a strip. */
+  background: var(--mr-primary);
   /* No bottom padding: the map connects seamlessly below the slider (Figma). */
   padding: 1rem 1rem 0.75rem;
   overflow: hidden;
@@ -754,7 +760,9 @@
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-columns: 1fr 540px;
+  /* Results panel is 540px on wide screens but never wider than half the
+     viewport, so the map (first column) always keeps at least 50% width. */
+  grid-template-columns: 1fr min(540px, 50%);
   gap: 0;
 }
 .app--desktop .map-wrap {
@@ -786,7 +794,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  padding: 0.85rem 2rem;
+  /* Small left padding so the consentmanager "Privacy settings" button
+     (fixed, bottom-left) doesn't sit right on top of the footer text. */
+  padding: 0.85rem 2rem 0.85rem 2.5rem;
   background: var(--mr-dark);
   color: var(--mr-light);
 }

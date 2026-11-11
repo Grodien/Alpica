@@ -1,0 +1,37 @@
+:host {
+  display: block;
+}
+
+.pageheader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--mr-primary);
+}
+
+.pageheader__logo-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.pageheader__logo {
+  height: 34px;
+  width: auto;
+  display: block;
+}
+
+/* Brand claim on the right; hidden on narrow screens so it doesn't crowd the
+   logo. */
+.pageheader__claim {
+  height: 14px;
+  width: auto;
+  display: none;
+  flex: 0 0 auto;
+}
+@media (min-width: 640px) {
+  .pageheader__claim {
+    display: block;
+  }
+}

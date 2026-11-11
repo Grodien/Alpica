@@ -1,0 +1,60 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #fff;
+  color: var(--mr-text);
+}
+
+.imprint {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.imprint__header {
+  margin-bottom: 2rem;
+}
+.imprint__back {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-family: var(--font-title);
+  font-size: 14px;
+  color: var(--mr-primary);
+  text-decoration: none;
+}
+.imprint__back:hover {
+  text-decoration: underline;
+}
+.imprint__title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1.2;
+  color: var(--mr-primary);
+}
+
+.imprint__section {
+  margin: 0 0 1.75rem;
+}
+.imprint__section h2 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--mr-dark);
+}
+.imprint__section p {
+  margin: 0 0 0.5rem;
+}
+.imprint__section a {
+  color: var(--mr-primary);
+  text-decoration: underline;
+}
+.imprint__section a:hover {
+  color: var(--mr-dark);
+}

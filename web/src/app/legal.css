@@ -1,0 +1,61 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #fff;
+  color: var(--mr-text);
+}
+
+.legal {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.legal__header {
+  margin-bottom: 2rem;
+}
+.legal__back {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-family: var(--font-title);
+  font-size: 14px;
+  color: var(--mr-primary);
+  text-decoration: none;
+}
+.legal__back:hover {
+  text-decoration: underline;
+}
+.legal__title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1.2;
+  color: var(--mr-primary);
+}
+
+.legal__section {
+  margin: 0 0 1.75rem;
+}
+.legal__section h2 {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--mr-dark);
+}
+.legal__section p {
+  margin: 0 0 0.75rem;
+  text-align: justify;
+}
+.legal__section a {
+  color: var(--mr-primary);
+  text-decoration: underline;
+}
+.legal__section a:hover {
+  color: var(--mr-dark);
+}

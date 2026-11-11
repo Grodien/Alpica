@@ -10,6 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ReportsService, type BoundingBox, type Report } from './reports.service';
 import { ResultsList } from './results-list';
 import { FilterSheet } from './filter-sheet';
@@ -51,7 +52,7 @@ const SKITOURENGURU_TILES = 'https://map.skitourenguru.com/AP_SG_TOPO_MINI.tms?x
 
 @Component({
   selector: 'app-home',
-  imports: [ResultsList, FilterSheet, FilterDropdown],
+  imports: [ResultsList, FilterSheet, FilterDropdown, RouterLink],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })

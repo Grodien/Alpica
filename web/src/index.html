@@ -6,6 +6,21 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- Exclude functionally-essential content hosts (map tiles + report image
+       hosts) from the CMP auto-blocking. These serve map/photo content, not
+       tracking, so blocking them until consent breaks the map and thumbnails.
+       Must be set BEFORE the auto-blocking script below loads. -->
+  <script>
+    window.cmp_block_ignoredomains = [
+      "map.skitourenguru.com",
+      "media.camptocamp.org",
+      "camptocamp.org",
+      "gipfelbuch.ch",
+      "skitour.fr",
+      "powderguide.com"
+    ];
+  </script>
+
   <!-- Consent Management Platform (consentmanager). Loaded FIRST so its
        auto-blocking can gate the Google tag below until consent is given. -->
   <script type="text/javascript" data-cmp-ab="1" src="https://cdn.consentmanager.net/delivery/autoblocking/e5d836cd423f9.js" data-cmp-host="a.delivery.consentmanager.net" data-cmp-cdn="cdn.consentmanager.net" data-cmp-codesrc="0"></script>

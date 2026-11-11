@@ -1,0 +1,84 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #fff;
+  color: var(--mr-text);
+}
+
+.privacy {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.privacy__back {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  font-family: var(--font-title);
+  font-size: 14px;
+  color: var(--mr-primary);
+  text-decoration: none;
+}
+.privacy__back:hover {
+  text-decoration: underline;
+}
+
+.privacy h1 {
+  margin: 0 0 1.25rem;
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1.2;
+  color: var(--mr-primary);
+}
+.privacy h2 {
+  margin: 2rem 0 0.5rem;
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--mr-dark);
+  scroll-margin-top: 1rem;
+}
+.privacy h3 {
+  margin: 1.5rem 0 0.5rem;
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--mr-dark);
+  scroll-margin-top: 1rem;
+}
+.privacy p {
+  margin: 0 0 0.75rem;
+}
+.privacy ul {
+  margin: 0 0 0.75rem;
+  padding-left: 1.5rem;
+}
+.privacy li {
+  margin-bottom: 0.4rem;
+}
+.privacy a {
+  color: var(--mr-primary);
+  text-decoration: underline;
+}
+.privacy a:hover {
+  color: var(--mr-dark);
+}
+.privacy .nowrap {
+  white-space: nowrap;
+}
+
+/* Table of contents: no bullets, tighter spacing (was inline in the source). */
+.privacy ul.table-of-contents,
+.privacy ul.table-of-contents ul {
+  list-style: none;
+  padding-left: 0;
+}
+.privacy ul.table-of-contents ul {
+  padding-left: 1.25rem;
+  margin-top: 0.3rem;
+}
