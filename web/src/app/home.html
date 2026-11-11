@@ -219,11 +219,14 @@
         title="Meinen Standort anzeigen"
       >
         <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <!-- Classic "my location" crosshair: four ticks, an outer ring and a
+               filled center dot. -->
           <path
-            d="M12 8a4 4 0 100 8 4 4 0 000-8zm0-5v3m0 12v3m9-9h-3M6 12H3"
+            d="M12 2v3M12 19v3M2 12h3M19 12h3"
             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
           />
-          <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+          <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="2" />
+          <circle cx="12" cy="12" r="2.4" fill="currentColor" />
         </svg>
       </button>
     </div>

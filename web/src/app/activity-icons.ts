@@ -4,7 +4,7 @@
  * Camptocamp, skitour.fr, Gipfelbuch), so we normalize loosely by matching
  * keywords. Falls back to a generic "other" category.
  *
- * Activity colors: Winter #0072bb · Sommer #3b8c47 · Summer2/misc #168b70 ·
+ * Activity colors: Winter #0072bb · Sommer/misc #3b8c47 ·
  * Bergsteigen2 #43526a · Klettern #404040
  *
  * The iconUrl points at the committed category SVGs (single-color), which are
@@ -26,8 +26,8 @@ const RULES: Array<{ match: RegExp } & ActivityDisplay> = [
   { match: /rock.?climb|escalade|klettern/i,      iconUrl: `${CAT}/klettertour.svg`, label: 'Klettern',     color: '#404040' },
   { match: /via.?ferrata|klettersteig/i,          iconUrl: `${CAT}/klettersteig.svg`, label: 'Klettersteig', color: '#43526a' },
   { match: /mountain.?bike|vtt|bike|velo/i,       iconUrl: `${CAT}/bike.svg`,        label: 'Bike',         color: '#3b8c47' },
-  { match: /canyon/i,                             iconUrl: `${CAT}/canyoning.svg`,   label: 'Canyoning',    color: '#168b70' },
-  { match: /paraglid|parapente|gleitschirm/i,     iconUrl: `${CAT}/anderes.svg`,     label: 'Gleitschirm',  color: '#168b70' },
+  { match: /canyon/i,                             iconUrl: `${CAT}/canyoning.svg`,   label: 'Canyoning',    color: '#3b8c47' },
+  { match: /paraglid|parapente|gleitschirm/i,     iconUrl: `${CAT}/anderes.svg`,     label: 'Gleitschirm',  color: '#3b8c47' },
   { match: /mountain.?climb|alpin|mountaineer|hochtour|snow.?ice/i, iconUrl: `${CAT}/hochtour.svg`, label: 'Hochtour', color: '#43526a' },
   { match: /hik|rando|wander/i,                   iconUrl: `${CAT}/alpwanderung.svg`, label: 'Wanderung',   color: '#3b8c47' },
 ];
@@ -35,7 +35,7 @@ const RULES: Array<{ match: RegExp } & ActivityDisplay> = [
 const FALLBACK: ActivityDisplay = {
   iconUrl: `${CAT}/anderes.svg`,
   label: 'Tour',
-  color: '#168b70',
+  color: '#3b8c47',
 };
 
 export function activityDisplay(activity: string | null): ActivityDisplay {

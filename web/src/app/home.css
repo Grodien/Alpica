@@ -93,12 +93,6 @@
   opacity: 0.6;
   pointer-events: none;
 }
-.map__locate--busy svg {
-  animation: locate-spin 0.9s linear infinite;
-}
-@keyframes locate-spin {
-  to { transform: rotate(360deg); }
-}
 
 /* User location marker (Leaflet divIcon, outside this view scope). */
 :host ::ng-deep .user-loc__dot {
@@ -258,22 +252,24 @@
   justify-content: center;
   text-align: center;
   margin: 0;
-  padding: 1rem;
+  /* Tighter vertical padding (less space above/below the logo), full side
+     padding kept. */
+  padding: 0.5rem 1rem;
   background: var(--mr-primary);
 }
 .app--mobile .app__logo {
-  height: 32px;
+  height: 42px;
   width: auto;
   display: block;
 }
 
 /* --- Mobile search block: bar + slider over the mountain background ------- */
-/* Sticky, stacked directly beneath the sticky header (logo bar is 32px tall +
-   2 x 1rem padding = 64px), so the search bar, filter button and date slider
+/* Sticky, stacked directly beneath the sticky header (logo bar is 42px tall +
+   2 x 0.5rem padding = 58px), so the search bar, filter button and date slider
    stay pinned while the results list scrolls underneath. */
 .app--mobile .search {
   position: sticky;
-  top: 64px;
+  top: 58px;
   z-index: 999;
   /* No bottom padding: the map connects seamlessly below the slider (Figma). */
   padding: 1rem 1rem 0.75rem;
