@@ -1,18 +1,18 @@
 /**
- * Canonical display names for report sources, respecting each site's branding:
- *   camptocamp   -> "camptocamp"   (lowercase, not "Camp2Camp")
- *   gipfelbuch   -> "Gipfelbuch"    (no ".ch")
- *   powderguide  -> "POWDERGUIDE"   (all caps)
- *   skitour      -> "Skitour"       (no ".fr")
+ * Display names for report sources, using each site's domain name:
+ *   camptocamp   -> "camptocamp.org"
+ *   gipfelbuch   -> "gipfelbuch.ch"
+ *   powderguide  -> "PowderGuide.com"
+ *   skitour      -> "skitour.fr"
  *
  * Used for the result-card source link and the filter source chips. Unknown
  * sources fall back to the raw value.
  */
 const SOURCE_NAMES: Record<string, string> = {
-  camptocamp: 'camptocamp',
-  gipfelbuch: 'Gipfelbuch',
-  powderguide: 'POWDERGUIDE',
-  skitour: 'Skitour',
+  camptocamp: 'camptocamp.org',
+  gipfelbuch: 'gipfelbuch.ch',
+  powderguide: 'PowderGuide.com',
+  skitour: 'skitour.fr',
 };
 
 export function sourceDisplay(source: string | null): string {

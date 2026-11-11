@@ -298,6 +298,18 @@ export class Home implements AfterViewInit, OnDestroy {
     this.applyCurrent();
   }
 
+  /** Clear just the category selection (desktop dropdown "x"). */
+  clearActivities(): void {
+    this.selectedActivities.set([]);
+    this.applyCurrent();
+  }
+
+  /** Clear just the source selection (desktop dropdown "x"). */
+  clearSources(): void {
+    this.selectedSources.set([]);
+    this.applyCurrent();
+  }
+
   /** Close the filter sheet; the current filter is already applied live. */
   closeFilter(): void {
     this.filterOpen.set(false);

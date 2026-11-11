@@ -40,6 +40,28 @@
   border-color: var(--mr-primary);
 }
 
+/* Clear ("x") shown in the button when the dropdown has a selection; replaces
+   the chevron and clears just this dropdown's filters. */
+.dd__clear {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  color: var(--mr-dark);
+  cursor: pointer;
+}
+.dd__clear:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--mr-primary);
+}
+.dd__clear:focus-visible {
+  outline: 2px solid var(--mr-primary);
+  outline-offset: 1px;
+}
+
 /* Menu popover. */
 .dd__menu {
   position: absolute;

@@ -43,6 +43,8 @@ export class FilterDropdown {
 
   /** Emitted when an option is toggled. */
   readonly toggle = output<string>();
+  /** Emitted when the user clears this dropdown's selection (the "x"). */
+  readonly clear = output<void>();
 
   protected readonly open = signal(false);
 
@@ -67,6 +69,15 @@ export class FilterDropdown {
 
   onToggle(key: string): void {
     this.toggle.emit(key);
+  }
+
+  /** Clears this dropdown's selection. Called by the "x" shown when active;
+      stops the click/keypress from also toggling the menu open. */
+  onClear(ev: Event): void {
+    ev.stopPropagation();
+    ev.preventDefault();
+    this.clear.emit();
+    this.open.set(false);
   }
 
   @HostListener('document:click', ['$event'])

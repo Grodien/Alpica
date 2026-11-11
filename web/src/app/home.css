@@ -621,8 +621,11 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex: 1 1 260px;
-  min-width: 220px;
+  flex: 0 1 300px;
+  min-width: 200px;
+  /* Cap the width so the search pill doesn't stretch across the whole header
+     on wide screens. */
+  max-width: 300px;
   height: 42px;
   padding: 0 0.85rem;
   background: var(--mr-light);

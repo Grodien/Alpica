@@ -7,9 +7,27 @@
     [attr.aria-expanded]="open()"
   >
     <span class="dd__label">{{ label() }}</span>
-    <svg class="dd__chevron" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-      <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
-    </svg>
+    @if (selected().length > 0) {
+      <!-- Clear this dropdown's selection. Rendered as a <span> (not a nested
+           <button>) to keep valid markup inside the toggle button. -->
+      <span
+        class="dd__clear"
+        role="button"
+        tabindex="0"
+        aria-label="Auswahl zurücksetzen"
+        (click)="onClear($event)"
+        (keydown.enter)="onClear($event)"
+        (keydown.space)="onClear($event)"
+      >
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+          <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+        </svg>
+      </span>
+    } @else {
+      <svg class="dd__chevron" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+        <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      </svg>
+    }
   </button>
 
   @if (open()) {

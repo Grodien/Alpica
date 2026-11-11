@@ -84,12 +84,14 @@
           [options]="categoryOptions"
           [selected]="selectedActivities()"
           (toggle)="toggleActivity($event)"
+          (clear)="clearActivities()"
         />
         <app-filter-dropdown
           placeholder="Alle Quellen"
           [options]="sourceOptions"
           [selected]="selectedSources()"
           (toggle)="toggleSource($event)"
+          (clear)="clearSources()"
         />
       </div>
     </header>
@@ -249,7 +251,7 @@
       <p class="dfooter__attribution">
         One Search. All Conditions.<br />
         Eine Dienstleistung der <strong>Bergportal GmbH</strong>, den Machern von
-        <a href="https://gipfelbuch.ch/" target="_blank" rel="noopener">Gipfelbuch</a>
+        <a href="https://gipfelbuch.ch/" target="_blank" rel="noopener">Gipfelbuch.ch</a>
       </p>
       <nav class="dfooter__links" aria-label="Rechtliches">
         <a href="#">Impressum</a>
