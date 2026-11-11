@@ -603,11 +603,26 @@
   opacity: 0.16;
   mix-blend-mode: hard-light;
 }
+/* Top strip: logo on the left, brand claim on the right. */
+.app--desktop .dheader__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0.3rem 0 0.75rem;
+}
 .app--desktop .dheader__logo {
   display: block;
   height: 40px;
   width: auto;
-  margin: 0.3rem 0 0.75rem;
+}
+/* Brand claim (SVG extracted from the logo tagline), top-right of the header. */
+.app--desktop .dheader__claim {
+  flex: 0 0 auto;
+  height: 16px;
+  width: auto;
+  display: block;
+  align-self: center;
 }
 .app--desktop .dheader__row {
   display: flex;

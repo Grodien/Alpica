@@ -207,21 +207,51 @@ export class Home implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.moveDebounce) clearTimeout(this.moveDebounce);
+    if (this.searchDebounce) clearTimeout(this.searchDebounce);
     if (isPlatformBrowser(this.platformId)) {
       window.removeEventListener('resize', this.onResize);
     }
     this.map?.remove();
   }
 
-  /** Search bar input handler — keeps the `query` signal controlled. */
+  /** Minimum characters before a typed query triggers an automatic search. */
+  private static readonly MIN_SEARCH_CHARS = 3;
+  /** Debounce for the as-you-type search so we don't fire on every keystroke. */
+  private searchDebounce: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * Search bar input handler — keeps the `query` signal controlled and triggers
+   * the search automatically once at least MIN_SEARCH_CHARS are entered
+   * (debounced). Clearing the field returns to the viewport (bbox) search.
+   */
   onQueryInput(event: Event): void {
-    this.query.set((event.target as HTMLInputElement).value);
+    const value = (event.target as HTMLInputElement).value;
+    this.query.set(value);
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    if (this.searchDebounce) clearTimeout(this.searchDebounce);
+    const term = value.trim();
+
+    if (term.length === 0) {
+      // Field cleared -> drop the active term and go back to viewport search.
+      if (this.searchTerm().length > 0) {
+        this.searchTerm.set('');
+        this.refresh();
+      }
+      return;
+    }
+
+    // Wait until there are enough characters to make a meaningful search.
+    if (term.length < Home.MIN_SEARCH_CHARS) return;
+
+    this.searchDebounce = setTimeout(() => this.onSearchSubmit(), 300);
   }
 
   /**
-   * Submit the free-text search (Enter in the search field). Runs an API text
-   * search across ALL reports, then fits the map to the results. While a term
-   * is active, map pan/zoom no longer triggers a bbox search (see refresh()).
+   * Submit the free-text search (as-you-type once >= 3 chars, or Enter / the
+   * search button). Runs an API text search across ALL reports, then fits the
+   * map to the results. While a term is active, map pan/zoom no longer triggers
+   * a bbox search (see refresh()).
    */
   onSearchSubmit(): void {
     const term = this.query().trim();
@@ -249,6 +279,7 @@ export class Home implements AfterViewInit, OnDestroy {
 
   /** Clear the search term and return to viewport (bbox) search. */
   clearSearch(): void {
+    if (this.searchDebounce) clearTimeout(this.searchDebounce);
     this.query.set('');
     this.searchTerm.set('');
     this.refresh();
