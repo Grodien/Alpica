@@ -376,12 +376,19 @@ export class Home implements AfterViewInit, OnDestroy {
     });
   }
 
-  /** Current date range (from = now - step days, to = now). */
+  /**
+   * Current date range: from = start (00:00) of the day `step.days` ago,
+   * to = now. Reports are day-granular (stored at 00:00:00), so the lower
+   * bound must be normalized to the START of the boundary day — otherwise a
+   * report dated N days ago at midnight would be excluded by the current
+   * time-of-day (e.g. "3 Tage" at 14:00 would drop that day's reports).
+   */
   private range(): { from: string; to: string; limit: number } {
     const to = new Date();
-    const from = new Date();
     const days = this.currentStep.days ?? RANGE_ALL_DAYS; // Alle -> very wide window
+    const from = new Date();
     from.setUTCDate(from.getUTCDate() - days);
+    from.setUTCHours(0, 0, 0, 0); // start of that day (reports are day-granular)
     return { from: from.toISOString(), to: to.toISOString(), limit: 200 };
   }
 
