@@ -67,7 +67,9 @@
   z-index: 2000;
   min-width: 11rem;
   margin: 0;
-  padding: 0.3rem;
+  /* Vertical padding only; horizontal padding lives on the options so their
+     right edge (the language code) lines up exactly with the trigger. */
+  padding: 0.3rem 0;
   list-style: none;
   background: #fff;
   color: var(--mr-text, #1a1a1a);
@@ -80,7 +82,9 @@
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  padding: 0.5rem 0.55rem;
+  /* Right padding matches the trigger's right padding (0.5rem) so each row's
+     trailing code aligns vertically with the code in the trigger button. */
+  padding: 0.5rem 0.5rem;
   border-radius: 7px;
   font-size: 0.9rem;
   cursor: pointer;
