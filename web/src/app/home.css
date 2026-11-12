@@ -652,6 +652,11 @@
   gap: 1rem;
   flex: 0 0 auto;
 }
+/* Pull the language switcher toward the header's right edge, cancelling most of
+   the header's 2rem right padding so only a small gap remains. */
+.app--desktop .dheader__top-right app-lang-switcher {
+  margin-right: -1.5rem;
+}
 /* Brand claim (SVG extracted from the logo tagline), top-right of the header. */
 .app--desktop .dheader__claim {
   flex: 0 0 auto;
