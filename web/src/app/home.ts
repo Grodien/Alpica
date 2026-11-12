@@ -17,22 +17,26 @@ import { FilterSheet } from './filter-sheet';
 import { FilterDropdown } from './filter-dropdown';
 import { FILTER_CATEGORIES, FILTER_SOURCES } from './filter-options';
 import { activityDisplay } from './activity-icons';
+import { I18nService } from './i18n/i18n.service';
+import { TPipe } from './i18n/t.pipe';
+import { LangSwitcher } from './i18n/lang-switcher';
 
 /** Viewport width (px) at/above which the desktop layout is used. */
 const DESKTOP_BREAKPOINT = 860;
 
 /** Date-range slider steps (labels from the Figma mobile design). */
 interface RangeStep {
-  label: string;
+  /** Translation key for the slider label. */
+  labelKey: string;
   /** Days back from "now" for from/to. null means "no lower bound" (Alle). */
   days: number | null;
 }
 const RANGE_STEPS: RangeStep[] = [
-  { label: '3 Tage', days: 3 },
-  { label: '1 Woche', days: 7 },
-  { label: '1 Monat', days: 30 },
-  { label: '6 Monate', days: 180 },
-  { label: 'Alle', days: null },
+  { labelKey: 'range.3days', days: 3 },
+  { labelKey: 'range.1week', days: 7 },
+  { labelKey: 'range.1month', days: 30 },
+  { labelKey: 'range.6months', days: 180 },
+  { labelKey: 'range.all', days: null },
 ];
 
 /** For "Alle": a lower bound far enough back to include everything. */
@@ -52,13 +56,14 @@ const SKITOURENGURU_TILES = 'https://map.skitourenguru.com/AP_SG_TOPO_MINI.tms?x
 
 @Component({
   selector: 'app-home',
-  imports: [ResultsList, FilterSheet, FilterDropdown, RouterLink],
+  imports: [ResultsList, FilterSheet, FilterDropdown, RouterLink, TPipe, LangSwitcher],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
 export class Home implements AfterViewInit, OnDestroy {
   private readonly reports = inject(ReportsService);
   private readonly platformId = inject(PLATFORM_ID);
+  protected readonly i18n = inject(I18nService);
 
   @ViewChild('mapEl') private mapEl!: ElementRef<HTMLDivElement>;
   @ViewChild('resultsPanel') private resultsPanel?: ElementRef<HTMLElement>;
@@ -69,13 +74,16 @@ export class Home implements AfterViewInit, OnDestroy {
 
   protected readonly steps = RANGE_STEPS;
 
-  /** Desktop dropdown options (reuse the mobile filter definitions). */
-  protected readonly categoryOptions = FILTER_CATEGORIES.map((c) => ({
-    key: c.key,
-    label: c.label,
-    icon: c.icon,
-    color: c.color,
-  }));
+  /** Desktop dropdown options (reuse the mobile filter definitions). Computed so
+      the category labels re-translate when the language changes. */
+  protected readonly categoryOptions = computed(() =>
+    FILTER_CATEGORIES.map((c) => ({
+      key: c.key,
+      label: this.i18n.t(c.labelKey),
+      icon: c.icon,
+      color: c.color,
+    })),
+  );
   protected readonly sourceOptions = FILTER_SOURCES.map((sr) => ({
     key: sr.key,
     label: sr.label,
@@ -147,6 +155,11 @@ export class Home implements AfterViewInit, OnDestroy {
 
   get currentStep(): RangeStep {
     return this.steps[this.rangeIndex()];
+  }
+
+  /** Translated label for a range step (used by the slider templates). */
+  protected stepLabel(step: RangeStep): string {
+    return this.i18n.t(step.labelKey);
   }
 
   async ngAfterViewInit(): Promise<void> {
@@ -446,7 +459,8 @@ export class Home implements AfterViewInit, OnDestroy {
 
     for (const r of results) {
       if (r.latitude == null || r.longitude == null) continue;
-      const { iconUrl, label, color } = activityDisplay(r.activity);
+      const { iconUrl, labelKey, color } = activityDisplay(r.activity);
+      const label = this.i18n.t(labelKey);
       const marker = this.L.marker([r.latitude, r.longitude], {
         icon: this.L.divIcon({
           className: 'pin',

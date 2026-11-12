@@ -10,7 +10,7 @@
     >
       <div class="result__thumb">
         @if (report.thumbnail) {
-          <img [src]="report.thumbnail" [alt]="report.title ?? 'Bild'" loading="lazy" />
+          <img [src]="report.thumbnail" [alt]="report.title ?? ''" loading="lazy" />
         } @else {
           <span
             class="result__thumb-fallback"
@@ -34,14 +34,14 @@
               [style.--cat-color]="display(report.activity).color"
               aria-hidden="true"
             ></span>
-            {{ display(report.activity).label }}
+            {{ activityLabel(report.activity) }}
           </span>
           @if (report.date) {
             <span class="result__date">{{ formatDate(report.date) }}</span>
           }
         </div>
 
-        <h2 class="result__title">{{ report.title || 'Ohne Titel' }}</h2>
+        <h2 class="result__title">{{ report.title || ('result.noTitle' | t) }}</h2>
 
         <!-- Description (clamped) with the author aligned to the bottom-right. -->
         <div class="result__descwrap">
@@ -49,7 +49,7 @@
             <p class="result__desc">{{ report.description || report.place }}</p>
           }
           @if (report.author) {
-            <span class="result__author">Autor: {{ report.author }}</span>
+            <span class="result__author">{{ 'result.author' | t: { name: report.author } }}</span>
           }
         </div>
 
@@ -59,13 +59,13 @@
             class="result__link"
             (click)="open.emit(report); $event.stopPropagation()"
           >
-            Bericht auf {{ sourceName(report.source) }}
+            {{ 'result.reportOn' | t: { source: sourceName(report.source) } }}
             <span class="result__link-icon" aria-hidden="true">↗</span>
           </button>
         }
       </div>
     </li>
   } @empty {
-    <li class="results__empty">Keine Ergebnisse im aktuellen Kartenausschnitt.</li>
+    <li class="results__empty">{{ 'result.emptyViewport' | t }}</li>
   }
 </ul>

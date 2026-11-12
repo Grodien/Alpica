@@ -1,7 +1,9 @@
-import { Component, input, output } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { activityDisplay } from './activity-icons';
 import { sourceDisplay } from './source-display';
 import type { Report } from './reports.service';
+import { I18nService } from './i18n/i18n.service';
+import { TPipe } from './i18n/t.pipe';
 
 /**
  * Presentational list of reports, shared by the mobile and desktop layouts.
@@ -10,11 +12,12 @@ import type { Report } from './reports.service';
  */
 @Component({
   selector: 'app-results-list',
-  imports: [],
+  imports: [TPipe],
   templateUrl: './results-list.html',
   styleUrl: './results-list.css',
 })
 export class ResultsList {
+  protected readonly i18n = inject(I18nService);
   /** Reports to display (already ordered by the parent). */
   readonly reports = input<Report[]>([]);
   /** Currently selected report id (highlighted). */
@@ -27,6 +30,11 @@ export class ResultsList {
 
   protected readonly display = activityDisplay;
   protected readonly sourceName = sourceDisplay;
+
+  /** Translated activity label for a report (from its matched display rule). */
+  protected activityLabel(activity: string | null): string {
+    return this.i18n.t(activityDisplay(activity).labelKey);
+  }
 
   /**
    * Whole days between the report date and today (local time), floored.
@@ -60,13 +68,13 @@ export class ResultsList {
     return days != null && days >= 0 && days < 10;
   }
 
-  /** Short German label for the report's age, e.g. "Heute" / "Gestern" / "3 Tage". */
+  /** Localized label for the report's age, e.g. "Today" / "Yesterday" / "3 days". */
   protected ageLabel(date: string | null): string {
     const days = this.ageDays(date);
     if (days == null) return '';
-    if (days <= 0) return 'Heute';
-    if (days === 1) return 'Gestern';
-    return `${days} Tage`;
+    if (days <= 0) return this.i18n.t('result.ageToday');
+    if (days === 1) return this.i18n.t('result.ageYesterday');
+    return this.i18n.t('result.ageDays', { days });
   }
 
   /**

@@ -2,151 +2,298 @@
 
 <main class="legal">
   <header class="legal__header">
-    <a class="legal__back" routerLink="/">← Zurück zur Karte</a>
-    <h1 class="legal__title">Rechtliche Aspekte</h1>
+    <a class="legal__back" [routerLink]="i18n.localized('/')">{{ 'page.backToMap' | t }}</a>
+    <h1 class="legal__title">{{ i18n.isEnglish() ? 'Legal notice' : 'Rechtliche Aspekte' }}</h1>
   </header>
 
-  <section class="legal__section">
-    <h2>Grundsätzliches</h2>
-    <p>
-      Wer Mountain Radar (mountain-radar.com) von Bergportal GmbH (im Folgenden
-      Bergportal genannt) nutzt, erklärt sich einverstanden mit den hier
-      aufgeführten Nutzungsbedingungen und der separaten
-      <a routerLink="/datenschutz">Datenschutzerklärung</a>.
-    </p>
-    <p>
-      Die auf Mountain Radar und verwandten Dienstleistungen (z.B. Verlinkungen)
-      abrufbaren Informationen haben keinen Anspruch auf Vollständigkeit und
-      Korrektheit. Sie sind fachkundig und mit Vorsicht zu interpretieren. Für
-      ein angemessenes Wissen zum Thema Alpinismus gehört neben Ausbildung in
-      Theorie und Praxis auch viel Erfahrung. Bergportal empfiehlt deshalb,
-      Ausbildungskurse von professionellen Anbietern zu besuchen, sowie die
-      einschlägige Literatur zu konsultieren.
-    </p>
-    <p>
-      Die verlinkten Verhältniseinträge werden automatisch aufgeschaltet und von
-      Bergportal nicht überprüft, egal ob diese aus externer Quelle oder von
-      Gipfelbuch.ch (ein Service von Bergportal GmbH) stammen. Alle Einträge
-      stellen ausschliesslich die persönliche Meinung der jeweiligen Verfasser
-      dar und müssen bezüglich ihrer Richtigkeit und Gültigkeit von jedem
-      Alpinisten selber eingeschätzt und überprüft werden. Bergportal weist
-      ausdrücklich auf die beschränkte zeitliche Gültigkeit der
-      Verhältnismeldungen und Routenbeschreibungen hin.
-    </p>
-    <p>
-      Beim Aufrufen von verlinkten Inhalten auf anderen Websites gelten deren
-      eigene Nutzungsbedingungen und Datenschutzerklärungen. Auch dort sind die
-      Verhältnismeldungen, Routenbeschreibungen und dergleichen mit der
-      entsprechenden Vorsicht zu interpretieren.
-    </p>
-    <p>
-      Bergportal übernimmt keinerlei Haftung für die auf Mountain Radar
-      angezeigten oder verlinkten Inhalte. Die Zugänglichkeit der Informationen
-      ersetzt nie alpinistische Erfahrung und eine solide Ausbildung in
-      Alpintechnik.
-    </p>
-  </section>
+  @if (!i18n.isEnglish()) {
+    <!-- German (authoritative) -->
+    <section class="legal__section">
+      <h2>Grundsätzliches</h2>
+      <p>
+        Wer Mountain Radar (mountain-radar.com) von Bergportal GmbH (im Folgenden
+        Bergportal genannt) nutzt, erklärt sich einverstanden mit den hier
+        aufgeführten Nutzungsbedingungen und der separaten
+        <a [routerLink]="i18n.localized('/datenschutz')">Datenschutzerklärung</a>.
+      </p>
+      <p>
+        Die auf Mountain Radar und verwandten Dienstleistungen (z.B. Verlinkungen)
+        abrufbaren Informationen haben keinen Anspruch auf Vollständigkeit und
+        Korrektheit. Sie sind fachkundig und mit Vorsicht zu interpretieren. Für
+        ein angemessenes Wissen zum Thema Alpinismus gehört neben Ausbildung in
+        Theorie und Praxis auch viel Erfahrung. Bergportal empfiehlt deshalb,
+        Ausbildungskurse von professionellen Anbietern zu besuchen, sowie die
+        einschlägige Literatur zu konsultieren.
+      </p>
+      <p>
+        Die verlinkten Verhältniseinträge werden automatisch aufgeschaltet und von
+        Bergportal nicht überprüft, egal ob diese aus externer Quelle oder von
+        Gipfelbuch.ch (ein Service von Bergportal GmbH) stammen. Alle Einträge
+        stellen ausschliesslich die persönliche Meinung der jeweiligen Verfasser
+        dar und müssen bezüglich ihrer Richtigkeit und Gültigkeit von jedem
+        Alpinisten selber eingeschätzt und überprüft werden. Bergportal weist
+        ausdrücklich auf die beschränkte zeitliche Gültigkeit der
+        Verhältnismeldungen und Routenbeschreibungen hin.
+      </p>
+      <p>
+        Beim Aufrufen von verlinkten Inhalten auf anderen Websites gelten deren
+        eigene Nutzungsbedingungen und Datenschutzerklärungen. Auch dort sind die
+        Verhältnismeldungen, Routenbeschreibungen und dergleichen mit der
+        entsprechenden Vorsicht zu interpretieren.
+      </p>
+      <p>
+        Bergportal übernimmt keinerlei Haftung für die auf Mountain Radar
+        angezeigten oder verlinkten Inhalte. Die Zugänglichkeit der Informationen
+        ersetzt nie alpinistische Erfahrung und eine solide Ausbildung in
+        Alpintechnik.
+      </p>
+    </section>
 
-  <section class="legal__section">
-    <h2>Haftung</h2>
-    <p>
-      Bergportal haftet nicht für den Inhalt auf Mountain Radar und verwandten
-      Dienstleistungen, unabhängig davon, ob es sich um eigenen oder von Nutzern
-      generierten Inhalt handelt, und ob dieser kostenlos oder gegen eine Gebühr
-      konsumiert wurde. Ferner wird jede Haftung für den Inhalt auf Seiten
-      Dritter abgelehnt, auf die mittels Hyperlinks verwiesen wird.
-    </p>
-    <p>Bergportal ist Betreiberin einer technischen Infrastruktur.</p>
-    <p>
-      Die von Bergportal eingebunden Inhalte von Drittparteien (z.B.
-      Wetterdienste, Lawineninformationen, Verhältnismeldungen,
-      Routenbeschreibungen etc.) werden von Bergportal in unveränderter Form und
-      ohne Prüfung übernommen. Bergportal garantiert nicht, dass diese Dienste
-      stets störungsfrei funktionieren und die Inhalte korrekt sind und lehnt
-      jegliche Haftung ab.
-    </p>
-    <p>
-      Bergportal garantiert nicht die korrekte und unterbrechungsfreie Funktion
-      der Portale und verwandten Dienstleistungen. Probleme bei Hard- und
-      Software können vorübergehend zum teilweisen oder kompletten Ausfall der
-      Dienstleistungen führen. Es können keine Ansprüche geltend gemacht werden,
-      auch nicht bei Bezug von kostenpflichtigen Dienstleistungen und Inhalten.
-    </p>
-    <p>
-      Bergportal haftet nicht für schadhafte Technik und für durch Computerviren,
-      Spionageprogramme und/oder andere schädliche Computerprogramme (Malware,
-      Spyware) bewirkte Schäden. Es besteht keine Haftung für die Folgen von
-      Betriebsunterbrechungen – weder für solche, die durch Störungen entstehen,
-      noch für jene, die der Störungsbehebung, der Wartung oder der Einführung
-      neuer Technologien dienen.
-    </p>
-  </section>
+    <section class="legal__section">
+      <h2>Haftung</h2>
+      <p>
+        Bergportal haftet nicht für den Inhalt auf Mountain Radar und verwandten
+        Dienstleistungen, unabhängig davon, ob es sich um eigenen oder von Nutzern
+        generierten Inhalt handelt, und ob dieser kostenlos oder gegen eine Gebühr
+        konsumiert wurde. Ferner wird jede Haftung für den Inhalt auf Seiten
+        Dritter abgelehnt, auf die mittels Hyperlinks verwiesen wird.
+      </p>
+      <p>Bergportal ist Betreiberin einer technischen Infrastruktur.</p>
+      <p>
+        Die von Bergportal eingebunden Inhalte von Drittparteien (z.B.
+        Wetterdienste, Lawineninformationen, Verhältnismeldungen,
+        Routenbeschreibungen etc.) werden von Bergportal in unveränderter Form und
+        ohne Prüfung übernommen. Bergportal garantiert nicht, dass diese Dienste
+        stets störungsfrei funktionieren und die Inhalte korrekt sind und lehnt
+        jegliche Haftung ab.
+      </p>
+      <p>
+        Bergportal garantiert nicht die korrekte und unterbrechungsfreie Funktion
+        der Portale und verwandten Dienstleistungen. Probleme bei Hard- und
+        Software können vorübergehend zum teilweisen oder kompletten Ausfall der
+        Dienstleistungen führen. Es können keine Ansprüche geltend gemacht werden,
+        auch nicht bei Bezug von kostenpflichtigen Dienstleistungen und Inhalten.
+      </p>
+      <p>
+        Bergportal haftet nicht für schadhafte Technik und für durch Computerviren,
+        Spionageprogramme und/oder andere schädliche Computerprogramme (Malware,
+        Spyware) bewirkte Schäden. Es besteht keine Haftung für die Folgen von
+        Betriebsunterbrechungen – weder für solche, die durch Störungen entstehen,
+        noch für jene, die der Störungsbehebung, der Wartung oder der Einführung
+        neuer Technologien dienen.
+      </p>
+    </section>
 
-  <section class="legal__section">
-    <h2>Urheberrecht</h2>
-    <p>
-      Der gesamte Inhalt der Portale und verwandten Dienstleistungen ist
-      urheberrechtlich geschützt. Unter diesen Schutzbereich fallen insbesondere
-      auch die Einspeisung der Daten in andere elektronische Systeme oder deren
-      Publikation durch andere Medien oder Internetdomains. Ohne ausdrückliche
-      Einwilligung von Bergportal darf kein Inhalt der Portale und verwandten
-      Dienstleistungen veröffentlicht werden, weder in elektronischer noch
-      gedruckter Form. Selbstverständlich darf jeder Autor oder Fotograf seine
-      hochgeladen Textinhalte respektive Bilder ohne Einwilligung von Bergportal
-      anderswo verwenden.
-    </p>
-    <p>
-      Die Autoren erklären sich beim Hochladen ihrer Inhalte einverstanden, dass
-      Bergportal diese sowohl in elektronischer wie auch in gedruckter Form unter
-      Angabe der jeweiligen Autoren auf unbeschränkte Zeit verwenden darf. Es
-      besteht kein Anspruch auf eine Gegenleistung.
-    </p>
-    <p>
-      Die Autoren stellen sicher, dass sie keine urheberrechtlich geschützten
-      Inhalte eintragen und übernehmen im Widerhandlungsfalle die Verantwortung.
-      Lädt ein Nutzer Fotos auf das Portal, ist er dafür verantwortlich, dass das
-      Persönlichkeitsrecht der abgebildeten Personen nicht verletzt wird und er
-      zur Publikation des Fotos berechtigt ist.
-    </p>
-  </section>
+    <section class="legal__section">
+      <h2>Urheberrecht</h2>
+      <p>
+        Der gesamte Inhalt der Portale und verwandten Dienstleistungen ist
+        urheberrechtlich geschützt. Unter diesen Schutzbereich fallen insbesondere
+        auch die Einspeisung der Daten in andere elektronische Systeme oder deren
+        Publikation durch andere Medien oder Internetdomains. Ohne ausdrückliche
+        Einwilligung von Bergportal darf kein Inhalt der Portale und verwandten
+        Dienstleistungen veröffentlicht werden, weder in elektronischer noch
+        gedruckter Form. Selbstverständlich darf jeder Autor oder Fotograf seine
+        hochgeladen Textinhalte respektive Bilder ohne Einwilligung von Bergportal
+        anderswo verwenden.
+      </p>
+      <p>
+        Die Autoren erklären sich beim Hochladen ihrer Inhalte einverstanden, dass
+        Bergportal diese sowohl in elektronischer wie auch in gedruckter Form unter
+        Angabe der jeweiligen Autoren auf unbeschränkte Zeit verwenden darf. Es
+        besteht kein Anspruch auf eine Gegenleistung.
+      </p>
+      <p>
+        Die Autoren stellen sicher, dass sie keine urheberrechtlich geschützten
+        Inhalte eintragen und übernehmen im Widerhandlungsfalle die Verantwortung.
+        Lädt ein Nutzer Fotos auf das Portal, ist er dafür verantwortlich, dass das
+        Persönlichkeitsrecht der abgebildeten Personen nicht verletzt wird und er
+        zur Publikation des Fotos berechtigt ist.
+      </p>
+    </section>
 
-  <section class="legal__section">
-    <h2>Datenschutz</h2>
-    <p>
-      Betreffend Datenschutz verweisen wir auf die separate
-      <a routerLink="/datenschutz">Datenschutzerklärung</a>.
-    </p>
-  </section>
+    <section class="legal__section">
+      <h2>Datenschutz</h2>
+      <p>
+        Betreffend Datenschutz verweisen wir auf die separate
+        <a [routerLink]="i18n.localized('/datenschutz')">Datenschutzerklärung</a>.
+      </p>
+    </section>
 
-  <section class="legal__section">
-    <h2>Anwendbares Recht und Gerichtsstand</h2>
-    <p>
-      Im Falle von Streitigkeiten kommt ausschliesslich materielles Schweizer
-      Recht unter Ausschluss von kollisionsrechtlichen Normen zur Anwendung. Das
-      UN-Kaufrecht (CISG, Wiener Kaufrecht) wird explizit ausgeschlossen.
-    </p>
-    <p>
-      Sollten einzelne Bestimmungen dieser Vereinbarung ganz oder teilweise
-      nichtig und/oder unwirksam sein, bleibt die Gültigkeit und/oder
-      Wirksamkeit der übrigen Bestimmungen oder Teile solcher Bestimmungen
-      unberührt. Die ungültigen und/oder unwirksamen Bestimmungen werden durch
-      solche ersetzt, die dem Sinn und Zweck der ungültigen und/oder unwirksamen
-      Bestimmungen in rechtwirksamer Weise wirtschaftlich am nächsten kommt. Das
-      gleiche gilt bei eventuellen Lücken der Regelung.
-    </p>
-    <p>
-      Ausschliesslicher Gerichtsstand für alle Rechtsstreitigkeiten aus oder im
-      Zusammenhang mit dieser Vereinbarung ist der Sitz von Bergportal GmbH.
-    </p>
-  </section>
+    <section class="legal__section">
+      <h2>Anwendbares Recht und Gerichtsstand</h2>
+      <p>
+        Im Falle von Streitigkeiten kommt ausschliesslich materielles Schweizer
+        Recht unter Ausschluss von kollisionsrechtlichen Normen zur Anwendung. Das
+        UN-Kaufrecht (CISG, Wiener Kaufrecht) wird explizit ausgeschlossen.
+      </p>
+      <p>
+        Sollten einzelne Bestimmungen dieser Vereinbarung ganz oder teilweise
+        nichtig und/oder unwirksam sein, bleibt die Gültigkeit und/oder
+        Wirksamkeit der übrigen Bestimmungen oder Teile solcher Bestimmungen
+        unberührt. Die ungültigen und/oder unwirksamen Bestimmungen werden durch
+        solche ersetzt, die dem Sinn und Zweck der ungültigen und/oder unwirksamen
+        Bestimmungen in rechtwirksamer Weise wirtschaftlich am nächsten kommt. Das
+        gleiche gilt bei eventuellen Lücken der Regelung.
+      </p>
+      <p>
+        Ausschliesslicher Gerichtsstand für alle Rechtsstreitigkeiten aus oder im
+        Zusammenhang mit dieser Vereinbarung ist der Sitz von Bergportal GmbH.
+      </p>
+    </section>
 
-  <section class="legal__section">
-    <h2>Zusatz Skitourenguru</h2>
-    <p>
-      Bezüglich der Nutzung sämtlicher Dienstleistungen, welche durch
-      Skitourenguru zur Verfügung gestellt und auf diesem Portal direkt angezeigt
-      werden, gilt zusätzlich der
-      <a href="https://www.skitourenguru.ch/" target="_blank" rel="noopener">Disclaimer von Skitourenguru</a>.
+    <section class="legal__section">
+      <h2>Zusatz Skitourenguru</h2>
+      <p>
+        Bezüglich der Nutzung sämtlicher Dienstleistungen, welche durch
+        Skitourenguru zur Verfügung gestellt und auf diesem Portal direkt angezeigt
+        werden, gilt zusätzlich der
+        <a href="https://www.skitourenguru.ch/" target="_blank" rel="noopener">Disclaimer von Skitourenguru</a>.
+      </p>
+    </section>
+  } @else {
+    <!-- English translation (informational; the German version is authoritative) -->
+    <p class="legal__authoritative">
+      This is a convenience translation. In case of any discrepancy, the German
+      version of this legal notice is authoritative.
     </p>
-  </section>
+
+    <section class="legal__section">
+      <h2>General</h2>
+      <p>
+        Anyone who uses Mountain Radar (mountain-radar.com) by Bergportal GmbH
+        (hereinafter referred to as Bergportal) agrees to the terms of use set out
+        here and to the separate
+        <a [routerLink]="i18n.localized('/datenschutz')">privacy policy</a>.
+      </p>
+      <p>
+        The information available on Mountain Radar and related services (e.g.
+        links) makes no claim to completeness or accuracy. It must be interpreted
+        with expertise and caution. Adequate knowledge of alpinism requires, in
+        addition to training in theory and practice, a great deal of experience.
+        Bergportal therefore recommends attending training courses run by
+        professional providers and consulting the relevant literature.
+      </p>
+      <p>
+        The linked conditions reports are published automatically and are not
+        reviewed by Bergportal, regardless of whether they come from an external
+        source or from Gipfelbuch.ch (a service of Bergportal GmbH). All entries
+        represent solely the personal opinion of the respective authors and must be
+        assessed and verified by every alpinist with regard to their accuracy and
+        validity. Bergportal expressly points out the limited period of validity of
+        conditions reports and route descriptions.
+      </p>
+      <p>
+        When accessing linked content on other websites, their own terms of use and
+        privacy policies apply. There too, conditions reports, route descriptions
+        and the like must be interpreted with corresponding caution.
+      </p>
+      <p>
+        Bergportal accepts no liability whatsoever for the content displayed or
+        linked on Mountain Radar. The accessibility of the information never
+        replaces alpine experience and solid training in alpine techniques.
+      </p>
+    </section>
+
+    <section class="legal__section">
+      <h2>Liability</h2>
+      <p>
+        Bergportal is not liable for the content on Mountain Radar and related
+        services, regardless of whether it is its own content or content generated
+        by users, and whether it was consumed free of charge or for a fee.
+        Furthermore, any liability for the content on third-party pages referred to
+        by means of hyperlinks is declined.
+      </p>
+      <p>Bergportal is the operator of a technical infrastructure.</p>
+      <p>
+        Third-party content integrated by Bergportal (e.g. weather services,
+        avalanche information, conditions reports, route descriptions, etc.) is
+        adopted by Bergportal in unchanged form and without review. Bergportal does
+        not guarantee that these services always function without disruption and
+        that the content is accurate, and declines any liability.
+      </p>
+      <p>
+        Bergportal does not guarantee the correct and uninterrupted operation of
+        the portals and related services. Problems with hardware and software may
+        temporarily lead to a partial or complete outage of the services. No claims
+        can be asserted, not even when paid services and content are purchased.
+      </p>
+      <p>
+        Bergportal is not liable for defective technology or for damage caused by
+        computer viruses, spyware and/or other harmful computer programs (malware,
+        spyware). There is no liability for the consequences of operational
+        interruptions – neither for those caused by disruptions, nor for those
+        serving to remedy disruptions, for maintenance, or for the introduction of
+        new technologies.
+      </p>
+    </section>
+
+    <section class="legal__section">
+      <h2>Copyright</h2>
+      <p>
+        The entire content of the portals and related services is protected by
+        copyright. This scope of protection covers in particular the feeding of the
+        data into other electronic systems or its publication through other media or
+        internet domains. Without the express consent of Bergportal, no content of
+        the portals and related services may be published, either in electronic or
+        printed form. Naturally, each author or photographer may use the text content
+        or images they have uploaded elsewhere without the consent of Bergportal.
+      </p>
+      <p>
+        When uploading their content, authors agree that Bergportal may use it both
+        in electronic and printed form, with attribution to the respective authors,
+        for an unlimited period of time. There is no entitlement to any
+        consideration in return.
+      </p>
+      <p>
+        Authors ensure that they do not submit any copyright-protected content and
+        assume responsibility in the event of infringement. If a user uploads
+        photos to the portal, they are responsible for ensuring that the personality
+        rights of the persons depicted are not violated and that they are entitled
+        to publish the photo.
+      </p>
+    </section>
+
+    <section class="legal__section">
+      <h2>Data protection</h2>
+      <p>
+        Regarding data protection, we refer to the separate
+        <a [routerLink]="i18n.localized('/datenschutz')">privacy policy</a>.
+      </p>
+    </section>
+
+    <section class="legal__section">
+      <h2>Applicable law and place of jurisdiction</h2>
+      <p>
+        In the event of disputes, exclusively Swiss substantive law applies, to the
+        exclusion of conflict-of-laws provisions. The UN Convention on Contracts for
+        the International Sale of Goods (CISG, Vienna Sales Convention) is expressly
+        excluded.
+      </p>
+      <p>
+        Should individual provisions of this agreement be wholly or partially void
+        and/or ineffective, the validity and/or effectiveness of the remaining
+        provisions or parts of such provisions remains unaffected. The invalid
+        and/or ineffective provisions shall be replaced by those which come closest
+        in an economically legally effective manner to the meaning and purpose of
+        the invalid and/or ineffective provisions. The same applies in the event of
+        any gaps in the regulation.
+      </p>
+      <p>
+        The exclusive place of jurisdiction for all legal disputes arising from or
+        in connection with this agreement is the registered office of Bergportal
+        GmbH.
+      </p>
+    </section>
+
+    <section class="legal__section">
+      <h2>Skitourenguru addendum</h2>
+      <p>
+        With regard to the use of all services provided by Skitourenguru and
+        displayed directly on this portal, the
+        <a href="https://www.skitourenguru.ch/" target="_blank" rel="noopener">Skitourenguru disclaimer</a>
+        additionally applies.
+      </p>
+    </section>
+  }
 </main>

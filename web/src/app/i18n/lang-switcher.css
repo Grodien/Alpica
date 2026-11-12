@@ -1,0 +1,126 @@
+:host {
+  display: inline-flex;
+}
+
+.langsw {
+  position: relative;
+  display: inline-flex;
+}
+
+/* --- Trigger: globe + active code + chevron, on the brand-blue header ----- */
+.langsw__trigger {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  padding: 0.38rem 0.5rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.langsw__trigger:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.langsw__globe {
+  flex: 0 0 auto;
+  display: block;
+}
+.langsw__code {
+  flex: 0 0 auto;
+}
+.langsw__chevron {
+  flex: 0 0 auto;
+  transition: transform 0.15s ease;
+}
+.langsw--open .langsw__chevron {
+  transform: rotate(180deg);
+}
+
+/* --- Solid variant: opaque white button for light backgrounds (mobile FAB) - */
+.langsw--solid .langsw__trigger {
+  border-color: transparent;
+  background: #fff;
+  color: var(--mr-dark, #0b2442);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+}
+.langsw--solid .langsw__trigger:hover {
+  background: #fff;
+  border-color: transparent;
+}
+
+/* --- Menu: popover anchored to the trigger via fixed coordinates ---------
+   Fixed positioning lets the menu escape any clipping (overflow:hidden) ancestor
+   such as the sticky mobile search block. `top`/`right` are set inline by the
+   component from the trigger's on-screen rect. */
+.langsw__menu {
+  position: fixed;
+  z-index: 2000;
+  min-width: 11rem;
+  margin: 0;
+  padding: 0.3rem;
+  list-style: none;
+  background: #fff;
+  color: var(--mr-text, #1a1a1a);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+}
+
+.langsw__option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.55rem;
+  border-radius: 7px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.langsw__option:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+.langsw__option--active {
+  font-weight: 600;
+}
+
+.langsw__check {
+  flex: 0 0 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mr-primary, #0072bb);
+}
+.langsw__name {
+  flex: 1 1 auto;
+}
+/* Short code on the right of each row, muted. */
+.langsw__abbr {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--mr-muted, #8a8a8a);
+}
+
+/* --- Compact variant for narrow (mobile) screens ------------------------- */
+@media (max-width: 859px) {
+  .langsw__trigger {
+    gap: 0.22rem;
+    font-size: 0.72rem;
+    padding: 0.3rem 0.45rem;
+  }
+  .langsw__globe {
+    width: 14px;
+    height: 14px;
+  }
+}

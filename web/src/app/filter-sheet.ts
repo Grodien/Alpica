@@ -1,5 +1,7 @@
-import { Component, ElementRef, input, output, signal, ViewChild } from '@angular/core';
+import { Component, ElementRef, inject, input, output, signal, ViewChild } from '@angular/core';
 import { FILTER_CATEGORIES, FILTER_SOURCES } from './filter-options';
+import { I18nService } from './i18n/i18n.service';
+import { TPipe } from './i18n/t.pipe';
 
 /**
  * Mobile filter bottom-sheet. Opened from the search bar's Filter button.
@@ -12,11 +14,12 @@ import { FILTER_CATEGORIES, FILTER_SOURCES } from './filter-options';
  */
 @Component({
   selector: 'app-filter-sheet',
-  imports: [],
+  imports: [TPipe],
   templateUrl: './filter-sheet.html',
   styleUrl: './filter-sheet.css',
 })
 export class FilterSheet {
+  protected readonly i18n = inject(I18nService);
   protected readonly categories = FILTER_CATEGORIES;
   protected readonly sources = FILTER_SOURCES;
 

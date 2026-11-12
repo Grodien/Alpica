@@ -1,7 +1,15 @@
 <app-page-header />
 
 <main class="privacy">
-  <a class="privacy__back" routerLink="/">← Zurück zur Karte</a>
+  <a class="privacy__back" [routerLink]="i18n.localized('/')">{{ 'page.backToMap' | t }}</a>
+
+  @if (i18n.isEnglish()) {
+    <p class="privacy__authoritative">
+      This privacy policy is provided in German. The German version is the
+      legally authoritative one; we have chosen not to publish a machine
+      translation of this legal text to avoid inaccuracies.
+    </p>
+  }
 
   <h1 id="top">Daten&shy;schutz&shy;erklärung</h1>
 

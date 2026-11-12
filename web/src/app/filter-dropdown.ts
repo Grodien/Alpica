@@ -8,6 +8,8 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { I18nService } from './i18n/i18n.service';
+import { TPipe } from './i18n/t.pipe';
 
 /** A selectable option for the dropdown. */
 export interface DropdownOption {
@@ -27,12 +29,13 @@ export interface DropdownOption {
  */
 @Component({
   selector: 'app-filter-dropdown',
-  imports: [],
+  imports: [TPipe],
   templateUrl: './filter-dropdown.html',
   styleUrl: './filter-dropdown.css',
 })
 export class FilterDropdown {
   private readonly host = inject(ElementRef<HTMLElement>);
+  protected readonly i18n = inject(I18nService);
 
   /** Placeholder shown when nothing is selected (e.g. "Alle Kategorien"). */
   readonly placeholder = input<string>('');
@@ -56,7 +59,7 @@ export class FilterDropdown {
       const opt = this.options().find((o) => o.key === sel[0]);
       return opt?.label ?? this.placeholder();
     }
-    return `${sel.length} ausgewählt`;
+    return this.i18n.t('dropdown.selectedCount', { count: sel.length });
   });
 
   isSelected(key: string): boolean {

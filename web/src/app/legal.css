@@ -59,3 +59,14 @@
 .legal__section a:hover {
   color: var(--mr-dark);
 }
+
+/* Notice shown on the English variant: the German version is authoritative. */
+.legal__authoritative {
+  margin: 0 0 1.75rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--mr-primary);
+  background: color-mix(in srgb, var(--mr-primary) 7%, #fff);
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--mr-text);
+}

@@ -14,7 +14,7 @@
         class="dd__clear"
         role="button"
         tabindex="0"
-        aria-label="Auswahl zurücksetzen"
+        [attr.aria-label]="'dropdown.clearAria' | t"
         (click)="onClear($event)"
         (keydown.enter)="onClear($event)"
         (keydown.space)="onClear($event)"

@@ -22,6 +22,13 @@
   display: block;
 }
 
+.pageheader__right {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex: 0 0 auto;
+}
+
 /* Brand claim on the right; hidden on narrow screens so it doesn't crowd the
    logo. */
 .pageheader__claim {

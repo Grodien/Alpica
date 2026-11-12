@@ -23,33 +23,36 @@
         <img
           class="dheader__logo"
           src="assets/logo/mountainradar-logo-horizontal-negative.svg"
-          alt="MountainRADAR"
+          [attr.alt]="i18n.t('app.logoAlt')"
         />
-        <!-- Brand claim (extracted from the logo tagline), top-right. -->
-        <img
-          class="dheader__claim"
-          src="assets/logo/claim.svg"
-          alt="One Search. All Conditions."
-        />
+        <div class="dheader__top-right">
+          <!-- Brand claim (extracted from the logo tagline), top-right. -->
+          <img
+            class="dheader__claim"
+            src="assets/logo/claim.svg"
+            [attr.alt]="i18n.t('app.claimAlt')"
+          />
+          <app-lang-switcher />
+        </div>
       </div>
 
       <div class="dheader__row">
         <!-- Search pill -->
         <div class="dsearch">
-          <button type="button" class="dsearch__icon-btn" (click)="onSearchSubmit()" aria-label="Suchen">
+          <button type="button" class="dsearch__icon-btn" (click)="onSearchSubmit()" [attr.aria-label]="i18n.t('home.searchButtonAria')">
             <img class="dsearch__icon" src="assets/icons/search.svg" alt="" aria-hidden="true" />
           </button>
           <input
             type="search"
             class="dsearch__input"
-            placeholder="Wo geht es hin?"
+            [placeholder]="i18n.t('home.searchPlaceholder')"
             [value]="query()"
             (input)="onQueryInput($event)"
             (keyup.enter)="onSearchSubmit()"
-            aria-label="Suchort"
+            [attr.aria-label]="i18n.t('home.searchAria')"
           />
           @if (query()) {
-            <button type="button" class="dsearch__clear" (click)="clearSearch()" aria-label="Suche zurücksetzen">
+            <button type="button" class="dsearch__clear" (click)="clearSearch()" [attr.aria-label]="i18n.t('home.clearSearchAria')">
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
                 <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
               </svg>
@@ -58,28 +61,28 @@
         </div>
 
         <!-- Horizontal date-range slider -->
-        <div class="dslider" role="group" aria-label="Datumsbereich">
+        <div class="dslider" role="group" [attr.aria-label]="i18n.t('home.rangeAria')">
           <div class="dslider__labels">
-            @for (step of steps; track step.label; let i = $index) {
+            @for (step of steps; track step.labelKey; let i = $index) {
               <button
                 type="button"
                 class="dslider__label"
                 [class.dslider__label--active]="i === rangeIndex()"
                 [style.left.%]="i / (steps.length - 1) * 100"
                 (click)="selectRange(i)"
-              >{{ step.label }}</button>
+              >{{ stepLabel(step) }}</button>
             }
           </div>
           <div class="dslider__track">
             <div class="dslider__fill" [style.width.%]="rangeIndex() / (steps.length - 1) * 100"></div>
-            @for (step of steps; track step.label; let i = $index) {
+            @for (step of steps; track step.labelKey; let i = $index) {
               <button
                 type="button"
                 class="dslider__dot"
                 [class.dslider__dot--filled]="i <= rangeIndex()"
                 [class.dslider__dot--active]="i === rangeIndex()"
                 [style.left.%]="i / (steps.length - 1) * 100"
-                [attr.aria-label]="step.label"
+                [attr.aria-label]="stepLabel(step)"
                 (click)="selectRange(i)"
               ></button>
             }
@@ -88,14 +91,14 @@
 
         <!-- Category + source multi-select dropdowns -->
         <app-filter-dropdown
-          placeholder="Alle Kategorien"
-          [options]="categoryOptions"
+          [placeholder]="i18n.t('home.allCategories')"
+          [options]="categoryOptions()"
           [selected]="selectedActivities()"
           (toggle)="toggleActivity($event)"
           (clear)="clearActivities()"
         />
         <app-filter-dropdown
-          placeholder="Alle Quellen"
+          [placeholder]="i18n.t('home.allSources')"
           [options]="sourceOptions"
           [selected]="selectedSources()"
           (toggle)="toggleSource($event)"
@@ -110,11 +113,11 @@
       <img
         class="app__logo"
         src="assets/logo/mountainradar-logo-horizontal-negative.svg"
-        alt="MountainRADAR"
+        [attr.alt]="i18n.t('app.logoAlt')"
       />
     </header>
 
-    <section class="search" aria-label="Suche" #mobileSearch>
+    <section class="search" [attr.aria-label]="i18n.t('home.searchButtonAria')" #mobileSearch>
       <div class="search__bg" aria-hidden="true"></div>
       <div class="search__row">
         <!-- Search pill (icon + input + clear), no filter button inside.
@@ -124,25 +127,25 @@
             type="button"
             class="search__icon-btn"
             (click)="onSearchSubmit()"
-            aria-label="Suchen"
+            [attr.aria-label]="i18n.t('home.searchButtonAria')"
           >
             <img class="search__icon-img" src="assets/icons/search.svg" alt="" aria-hidden="true" />
           </button>
           <input
             type="search"
             class="search__input"
-            placeholder="Wo geht es hin?"
+            [placeholder]="i18n.t('home.searchPlaceholder')"
             [value]="query()"
             (input)="onQueryInput($event)"
             (keyup.enter)="onSearchSubmit()"
-            aria-label="Suchort"
+            [attr.aria-label]="i18n.t('home.searchAria')"
           />
           @if (query()) {
             <button
               type="button"
               class="search__clear"
               (click)="clearSearch()"
-              aria-label="Suche zurücksetzen"
+              [attr.aria-label]="i18n.t('home.clearSearchAria')"
             >
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
                 <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
@@ -158,7 +161,7 @@
           class="search__filter"
           [class.search__filter--active]="activeFilterCount() > 0"
           (click)="onFilter()"
-          aria-label="Filter"
+          [attr.aria-label]="i18n.t('home.filterAria')"
           [attr.aria-pressed]="activeFilterCount() > 0"
         >
           <img
@@ -175,9 +178,9 @@
         runs from the start up to the active dot; each label sits directly above
         its own dot (not space-between). Clicking a dot selects that step.
       -->
-      <div class="dateslider" role="group" aria-label="Datumsbereich">
+      <div class="dateslider" role="group" [attr.aria-label]="i18n.t('home.rangeAria')">
         <div class="dateslider__labels">
-          @for (step of steps; track step.label; let i = $index) {
+          @for (step of steps; track step.labelKey; let i = $index) {
             <button
               type="button"
               class="dateslider__label"
@@ -186,7 +189,7 @@
               [attr.aria-pressed]="i === rangeIndex()"
               (click)="selectRange(i)"
             >
-              {{ step.label }}
+              {{ stepLabel(step) }}
             </button>
           }
         </div>
@@ -196,14 +199,14 @@
             class="dateslider__fill"
             [style.width.%]="rangeIndex() / (steps.length - 1) * 100"
           ></div>
-          @for (step of steps; track step.label; let i = $index) {
+          @for (step of steps; track step.labelKey; let i = $index) {
             <button
               type="button"
               class="dateslider__dot"
               [class.dateslider__dot--filled]="i <= rangeIndex()"
               [class.dateslider__dot--active]="i === rangeIndex()"
               [style.left.%]="i / (steps.length - 1) * 100"
-              [attr.aria-label]="step.label"
+              [attr.aria-label]="stepLabel(step)"
               [attr.aria-pressed]="i === rangeIndex()"
               (click)="selectRange(i)"
             ></button>
@@ -215,9 +218,9 @@
 
   <div class="content">
     <div class="map-wrap">
-      <div #mapEl class="map" role="application" aria-label="Karte mit Ergebnissen"></div>
+      <div #mapEl class="map" role="application" [attr.aria-label]="i18n.t('home.mapAria')"></div>
       @if (loading()) {
-        <div class="map__loading">Lade…</div>
+        <div class="map__loading">{{ i18n.t('home.loading') }}</div>
       }
       <!-- Locate-me button: centers the map on the user's position. -->
       <button
@@ -225,8 +228,8 @@
         class="map__locate"
         [class.map__locate--busy]="locating()"
         (click)="locate()"
-        aria-label="Meinen Standort anzeigen"
-        title="Meinen Standort anzeigen"
+        [attr.aria-label]="i18n.t('home.locateAria')"
+        [attr.title]="i18n.t('home.locateAria')"
       >
         <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
           <!-- Classic "my location" crosshair: four ticks, an outer ring and a
@@ -242,7 +245,7 @@
     </div>
 
     <section class="results" #resultsPanel>
-      <p class="results__count">{{ results().length }} Ergebnisse</p>
+      <p class="results__count">{{ 'home.resultsCount' | t: { count: results().length } }}</p>
       <app-results-list
         [reports]="orderedResults()"
         [selectedId]="selectedId()"
@@ -257,14 +260,14 @@
   @if (isDesktop()) {
     <footer class="dfooter">
       <p class="dfooter__attribution">
-        One Search. All Conditions.<br />
-        Eine Dienstleistung der <strong>Bergportal GmbH</strong>, den Machern von
+        {{ i18n.t('footer.claim') }}<br />
+        {{ i18n.t('footer.attributionPre') }} <strong>Bergportal GmbH</strong>{{ i18n.t('footer.attributionMid') }}
         <a href="https://gipfelbuch.ch/" target="_blank" rel="noopener">Gipfelbuch.ch</a>
       </p>
-      <nav class="dfooter__links" aria-label="Rechtliches">
-        <a routerLink="/impressum">Impressum</a>
-        <a routerLink="/datenschutz">Datenschutz</a>
-        <a routerLink="/legal">Rechtliche Aspekte</a>
+      <nav class="dfooter__links" [attr.aria-label]="i18n.t('footer.legalNav')">
+        <a [routerLink]="i18n.localized('/impressum')">{{ i18n.t('footer.impressum') }}</a>
+        <a [routerLink]="i18n.localized('/datenschutz')">{{ i18n.t('footer.privacy') }}</a>
+        <a [routerLink]="i18n.localized('/legal')">{{ i18n.t('footer.legal') }}</a>
       </nav>
     </footer>
   }
@@ -275,17 +278,17 @@
       <img
         class="footer__logo"
         src="assets/logo/mountainradar-logo-negative.svg"
-        alt="MountainRADAR"
+        [attr.alt]="i18n.t('app.logoAlt')"
       />
 
-      <nav class="footer__links" aria-label="Rechtliches">
-        <a routerLink="/impressum">Impressum</a>
-        <a routerLink="/datenschutz">Datenschutz</a>
-        <a routerLink="/legal">Rechtliche Aspekte</a>
+      <nav class="footer__links" [attr.aria-label]="i18n.t('footer.legalNav')">
+        <a [routerLink]="i18n.localized('/impressum')">{{ i18n.t('footer.impressum') }}</a>
+        <a [routerLink]="i18n.localized('/datenschutz')">{{ i18n.t('footer.privacy') }}</a>
+        <a [routerLink]="i18n.localized('/legal')">{{ i18n.t('footer.legal') }}</a>
       </nav>
 
       <p class="footer__attribution">
-        Eine Dienstleistung der <strong>Bergportal GmbH</strong>, den Machern von
+        {{ i18n.t('footer.attributionPre') }} <strong>Bergportal GmbH</strong>{{ i18n.t('footer.attributionMid') }}
         <a href="https://gipfelbuch.ch/" target="_blank" rel="noopener">Gipfelbuch.ch</a>
       </p>
     </footer>
@@ -301,5 +304,9 @@
       (reset)="resetFilters()"
       (close)="closeFilter()"
     />
+
+    <!-- Floating language switcher, bottom-right. Sits outside the clipped
+         search block so its dropdown (which opens upward) is never cut off. -->
+    <app-lang-switcher class="app__langsw-fab" variant="solid" />
   }
 </div>

@@ -243,6 +243,7 @@
 
 /* --- Mobile header: logo on the brand-blue surface ----------------------- */
 /* Sticky so the logo bar stays pinned to the top while the page scrolls. */
+/* Sticky so the logo bar stays pinned to the top while the page scrolls. */
 .app--mobile .app__header {
   position: sticky;
   top: 0;
@@ -387,6 +388,18 @@
   width: 21px;
   height: 21px;
   display: block;
+}
+
+/* Floating language switcher (mobile), bottom-right. Fixed to the viewport so
+   it stays reachable while the page scrolls, and sits above the map/results.
+   The button's light/solid look comes from the component's own `variant`
+   styles (see lang-switcher.css); here we only place and size it. */
+.app--mobile .app__langsw-fab {
+  position: fixed;
+  right: 1rem;
+  /* Clear the iOS home indicator / safe area. */
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  z-index: 1100;
 }
 
 /* --- Mobile custom date-range slider ------------------------------------- */
@@ -552,6 +565,9 @@
   text-decoration: none;
   opacity: 0.9;
 }
+.app--mobile .footer__links a:visited {
+  color: var(--mr-light);
+}
 .app--mobile .footer__links a:hover {
   opacity: 1;
   text-decoration: underline;
@@ -568,10 +584,14 @@
 .app--mobile .footer__attribution strong {
   font-weight: 600;
 }
-.app--mobile .footer__attribution a {
+.app--mobile .footer__attribution a,
+.app--mobile .footer__attribution a:visited {
   color: var(--mr-light);
   font-weight: 600;
   text-decoration: underline;
+}
+.app--mobile .footer__attribution a:hover {
+  color: #fff;
 }
 
 /* ===========================================================================
@@ -624,6 +644,13 @@
   display: block;
   height: 40px;
   width: auto;
+}
+/* Top-right cluster: brand claim + language switcher. */
+.app--desktop .dheader__top-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 0 0 auto;
 }
 /* Brand claim (SVG extracted from the logo tagline), top-right of the header. */
 .app--desktop .dheader__claim {
@@ -811,7 +838,9 @@
   font-weight: 300;
 }
 .app--desktop .dfooter__attribution strong { font-weight: 600; }
-.app--desktop .dfooter__attribution a { color: var(--mr-light); font-weight: 600; text-decoration: underline; }
+.app--desktop .dfooter__attribution a,
+.app--desktop .dfooter__attribution a:visited { color: var(--mr-light); font-weight: 600; text-decoration: underline; }
+.app--desktop .dfooter__attribution a:hover { color: #fff; }
 .app--desktop .dfooter__links {
   display: flex;
   gap: 1.75rem;
@@ -824,4 +853,5 @@
   text-decoration: none;
   opacity: 0.95;
 }
+.app--desktop .dfooter__links a:visited { color: var(--mr-light); }
 .app--desktop .dfooter__links a:hover { opacity: 1; text-decoration: underline; }
